@@ -17,16 +17,14 @@ administradoresRegistrados = []
 # Clases
 
 class Usuario:
-    def __init__(self, idUsuario, nombre, contraseña):
+    def __init__(self, idUsuario, nombreUsuario, contraseña):
         self.idUsuario = idUsuario
-        self.nombre = nombre
+        self.nombreUsuario = nombreUsuario
         self.contraseña = contraseña
 
-# Clase para Administrador usando herencia de la clase Usuario
-
 class Administrador(Usuario):
-    def __init__(self, id_usuario, nombre, contraseña):
-        super().__init__(id_usuario, nombre, contraseña)
+    def __init__(self, id_usuario, nombreUsuario, contraseña):
+        super().__init__(id_usuario, nombreUsuario, contraseña)
     
     def gestionarClientes(self):
         print("Función para gestionar clientes...")
@@ -34,16 +32,14 @@ class Administrador(Usuario):
     def gestionarCajeros(self):
         print("Función para gestionar cajeros...")
 
-# Clase para Cliente usando herencia de la clase Usuario
 class Cliente(Usuario):
-    def __init__(self, id_usuario, nombre, contraseña, cuenta):
-        super().__init__(id_usuario, nombre, contraseña)
-        self.cuenta = cuenta  # Asignar una cuenta bancaria al cliente
+    def __init__(self, id_usuario, nombreUsuario, contraseña, cuenta):
+        super().__init__(id_usuario, nombreUsuario, contraseña)
+        self.cuenta = cuenta
 
     def realizarOperacion(self, tipo, monto):
         print(f"Realizando operación: {tipo} por un monto de {monto}...")
 
-# Clase para Cuenta
 class Cuenta:
     def __init__(self, id_cuenta, saldo=0):
         self.id_cuenta = id_cuenta
@@ -66,7 +62,6 @@ class Cuenta:
         movimiento = Movimiento(tipo, monto, datetime.now())
         self.movimientos.append(movimiento)
 
-# Clase para Movimiento
 class Movimiento:
     def __init__(self, tipo, monto, fecha_hora):
         self.tipo = tipo
@@ -76,7 +71,6 @@ class Movimiento:
     def __str__(self):
         return f"{self.fecha_hora} - {self.tipo}: {self.monto}"
 
-# Clase para Cajero
 class Cajero:
     def __init__(self, id_cajero, region):
         self.id_cajero = id_cajero
@@ -91,9 +85,7 @@ class Cajero:
 
     def retirarBilletes(self, monto):
         print(f"Realizando desglose de {monto} en billetes...")
-        # Implementar lógica para retirar billetes según disponibilidad
 
-# Clase para Billete (opcional, si se requiere lógica más avanzada)
 class Billete:
     def __init__(self, denominacion, cantidad):
         self.denominacion = denominacion
@@ -138,6 +130,17 @@ def menuAdministrador():
         else:
             print("Opción inválida. Intente nuevamente.")
 
+def usuarioRegistrado(nombreUsuario):
+    for cliente in clientesRegistrados:
+        if cliente.nombreUsuario == nombreUsuario:
+            return True
+        
+    for administrador in administradoresRegistrados:
+        if administrador.nombreUsuario == nombreUsuario:
+            return True
+    return False
+    
+
 def gestionarAdministrador():
     while True:
         print("\n=== Opciones de Administrador ===")
@@ -157,16 +160,23 @@ def gestionarAdministrador():
 
 def registrarAdministrador():
     print("\n=== Registro de Administrador ===")
-    nombre = input("Ingrese el nombre del administrador: ")
+    nombreUsuario = input("Ingrese el nombre usuario: ")
+
+    registrado = usuarioRegistrado(nombreUsuario)
+    
+    if registrado:
+        print("Nombre de usuario ya registrado en una cuenta, ingresar otro nombre de usuario")
+        return
+    
     contraseña = input("Ingrese la contraseña: ")
     idUsuario = len(administradoresRegistrados) + 1
-    nuevoAdmin = Administrador(idUsuario, nombre, contraseña)
+    nuevoAdmin = Administrador(idUsuario, nombreUsuario, contraseña)
     administradoresRegistrados.append(nuevoAdmin)
-    print(f"Administrador '{nombre}' registrado con éxito.")
+    print(f"Administrador '{nombreUsuario}' registrado con éxito.")
     
 def iniciarSesionAdministrador():
     print("\n=== Inicio de Sesión Administrador ===")
-    nombre = input("Ingrese su nombre: ")
+    nombre = input("Ingrese su nombre de usuario: ")
     contraseña = input("Ingrese su contraseña: ")
     for admin in administradoresRegistrados:
         if admin.nombre == nombre and admin.contraseña == contraseña:
@@ -219,22 +229,29 @@ def clienteCajeros():
 
 def registrarCliente():
     print("\n=== Registro de Cliente ===")
-    nombre = input("Ingrese el nombre del cliente: ")
+    nombreUsuario = input("Ingrese el nombre de usuario: ")
+    
+    registrado = usuarioRegistrado(nombreUsuario)
+    
+    if registrado:
+        print("Nombre de usuario ya registrado en una cuenta, ingresar otro nombre de usuario")
+        return
+        
     contraseña = input("Ingrese la contraseña: ")
     idUsuario = len(clientesRegistrados) + 1
     saldoInicial = 0
     nuevaCuenta = Cuenta(f"CU{idUsuario}", saldoInicial)
-    nuevoCliente = Cliente(idUsuario, nombre, contraseña, nuevaCuenta)
+    nuevoCliente = Cliente(idUsuario, nombreUsuario, contraseña, nuevaCuenta)
     clientesRegistrados.append(nuevoCliente)
-    print(f"Cliente '{nombre}' registrado con éxito.")
+    print(f"Cliente '{nombreUsuario}' registrado con éxito.")
 
 def iniciarSesionCliente():
     print("\n=== Inicio de Sesión Cliente ===")
-    nombre = input("Ingrese su nombre: ")
+    nombreUsuario = input("Ingrese su nombre de usuario: ")
     contraseña = input("Ingrese su contraseña: ")
     for cliente in clientesRegistrados:
-        if cliente.nombre == nombre and cliente.contraseña == contraseña:
-            print(f"¡Bienvenido, {nombre}!")
+        if cliente.nombreUsuario == nombreUsuario and cliente.contraseña == contraseña:
+            print(f"¡Bienvenido, {nombreUsuario}!")
             clienteCajeros()
             return
     print("Credenciales incorrectas. Intente nuevamente.")
