@@ -1,6 +1,111 @@
+#------------------------------------------------------------------------------#
+
+# Librerias
+
+from datetime import datetime
+
+#------------------------------------------------------------------------------#
+
+# Listas
+
+clientesRegistrados = []
+administradoresRegistrados = []
+
+
+#------------------------------------------------------------------------------#
+
+# Clases
+
+class Usuario:
+    def __init__(self, idUsuario, nombre, contraseña):
+        self.idUsuario = idUsuario
+        self.nombre = nombre
+        self.contraseña = contraseña
+
+# Clase para Administrador usando herencia de la clase Usuario
+
+class Administrador(Usuario):
+    def __init__(self, id_usuario, nombre, contraseña):
+        super().__init__(id_usuario, nombre, contraseña)
+    
+    def gestionarClientes(self):
+        print("Función para gestionar clientes...")
+
+    def gestionarCajeros(self):
+        print("Función para gestionar cajeros...")
+
+# Clase para Cliente usando herencia de la clase Usuario
+class Cliente(Usuario):
+    def __init__(self, id_usuario, nombre, contraseña, cuenta):
+        super().__init__(id_usuario, nombre, contraseña)
+        self.cuenta = cuenta  # Asignar una cuenta bancaria al cliente
+
+    def realizarOperacion(self, tipo, monto):
+        print(f"Realizando operación: {tipo} por un monto de {monto}...")
+
+# Clase para Cuenta
+class Cuenta:
+    def __init__(self, id_cuenta, saldo=0):
+        self.id_cuenta = id_cuenta
+        self.saldo = saldo
+        self.movimientos = []  # Lista de movimientos asociados a la cuenta
+
+    def depositar(self, monto):
+        self.saldo += monto
+        self.registrarMovimiento("Depósito", monto)
+
+    def retirar(self, monto):
+        if monto > self.saldo:
+            print("Saldo insuficiente.")
+            return False
+        self.saldo -= monto
+        self.registrarMovimiento("Retiro", monto)
+        return True
+
+    def registrarMovimiento(self, tipo, monto):
+        movimiento = Movimiento(tipo, monto, datetime.now())
+        self.movimientos.append(movimiento)
+
+# Clase para Movimiento
+class Movimiento:
+    def __init__(self, tipo, monto, fecha_hora):
+        self.tipo = tipo
+        self.monto = monto
+        self.fecha_hora = fecha_hora
+
+    def __str__(self):
+        return f"{self.fecha_hora} - {self.tipo}: {self.monto}"
+
+# Clase para Cajero
+class Cajero:
+    def __init__(self, id_cajero, region):
+        self.id_cajero = id_cajero
+        self.region = region
+        self.billetes = {200: 0, 100: 0, 50: 0, 20: 0}  # Denominaciones y cantidades
+
+    def agregarBilletes(self, denominacion, cantidad):
+        if denominacion in self.billetes:
+            self.billetes[denominacion] += cantidad
+        else:
+            print(f"Denominación {denominacion} no válida.")
+
+    def retirarBilletes(self, monto):
+        print(f"Realizando desglose de {monto} en billetes...")
+        # Implementar lógica para retirar billetes según disponibilidad
+
+# Clase para Billete (opcional, si se requiere lógica más avanzada)
+class Billete:
+    def __init__(self, denominacion, cantidad):
+        self.denominacion = denominacion
+        self.cantidad = cantidad
+
+#------------------------------------------------------------------------------#
+
+# Menús y sub menús
+
 def menuPrincipal():
     while True:
-        print("\n=== Cajero multifuncional CustoPay ===\n")
+        print("\n=== Sistema de cajeros multfuncionales CustoPay ===\n")
         print("1. Administrador")
         print("2. Cliente")
         print("3. Salir\n")
@@ -16,17 +121,16 @@ def menuPrincipal():
         else:
             print("Opción inválida. Intente nuevamente.")
 
-# Menu del Administrador
 def menuAdministrador():
     while True:
-        print("\n=== Menú Administrador ===")
+        print("\n=== Menú Administrador ===\n")
         print("1. Iniciar sesión")
         print("2. Registrarse")
-        print("3. Salir")
+        print("3. Salir\n")
         opcion = input("Seleccione una opción: ")
 
         if opcion == "1":
-            gestionarAdministrador()
+            iniciarSesionAdministrador()
         elif opcion == "2":
             registrarAdministrador()
         elif opcion == "3":
@@ -52,19 +156,35 @@ def gestionarAdministrador():
             print("Opción inválida. Intente nuevamente.")
 
 def registrarAdministrador():
-    print("\nFunción para registrar un administrador...")
+    print("\n=== Registro de Administrador ===")
+    nombre = input("Ingrese el nombre del administrador: ")
+    contraseña = input("Ingrese la contraseña: ")
+    idUsuario = len(administradoresRegistrados) + 1
+    nuevoAdmin = Administrador(idUsuario, nombre, contraseña)
+    administradoresRegistrados.append(nuevoAdmin)
+    print(f"Administrador '{nombre}' registrado con éxito.")
+    
+def iniciarSesionAdministrador():
+    print("\n=== Inicio de Sesión Administrador ===")
+    nombre = input("Ingrese su nombre: ")
+    contraseña = input("Ingrese su contraseña: ")
+    for admin in administradoresRegistrados:
+        if admin.nombre == nombre and admin.contraseña == contraseña:
+            print(f"¡Bienvenido, {nombre}!")
+            gestionarAdministrador()
+            return
+    print("Credenciales incorrectas. Intente nuevamente.")
 
-# Menu del Cliente
 def menuCliente():
     while True:
-        print("\n=== Menú Cliente ===")
+        print("\n=== Menú Cliente ===\n")
         print("1. Iniciar sesión")
         print("2. Registrarse")
-        print("3. Salir")
+        print("3. Salir\n")
         opcion = input("Seleccione una opción: ")
 
         if opcion == "1":
-            clienteCajeros()
+            iniciarSesionCliente()
         elif opcion == "2":
             registrarCliente()
         elif opcion == "3":
@@ -78,7 +198,6 @@ def gestionarClientes():
 def gestionarCajeros():
     print("\nFunción para gestionar cajeros...")
 
-# Funcionalidades del Cliente
 def clienteCajeros():
     while True:
         print("\n=== Seleccione Región ===")
@@ -99,7 +218,26 @@ def clienteCajeros():
             print("Opción inválida. Intente nuevamente.")
 
 def registrarCliente():
-    print("\nFunción para registrar un cliente...")
+    print("\n=== Registro de Cliente ===")
+    nombre = input("Ingrese el nombre del cliente: ")
+    contraseña = input("Ingrese la contraseña: ")
+    idUsuario = len(clientesRegistrados) + 1
+    saldoInicial = 0
+    nuevaCuenta = Cuenta(f"CU{idUsuario}", saldoInicial)
+    nuevoCliente = Cliente(idUsuario, nombre, contraseña, nuevaCuenta)
+    clientesRegistrados.append(nuevoCliente)
+    print(f"Cliente '{nombre}' registrado con éxito.")
+
+def iniciarSesionCliente():
+    print("\n=== Inicio de Sesión Cliente ===")
+    nombre = input("Ingrese su nombre: ")
+    contraseña = input("Ingrese su contraseña: ")
+    for cliente in clientesRegistrados:
+        if cliente.nombre == nombre and cliente.contraseña == contraseña:
+            print(f"¡Bienvenido, {nombre}!")
+            clienteCajeros()
+            return
+    print("Credenciales incorrectas. Intente nuevamente.")
 
 def operacionesCliente(region):
     print(f"\n=== Operaciones en Cajero de Región {region} ===")
