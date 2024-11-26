@@ -6,15 +6,6 @@ from datetime import datetime
 
 #------------------------------------------------------------------------------#
 
-# Listas
-
-clientesRegistrados = []
-administradoresRegistrados = []
-cajerosRegistrados = []
-
-
-#------------------------------------------------------------------------------#
-
 # Clases
 
 class Usuario:
@@ -42,7 +33,6 @@ class Cliente(Usuario):
 
     def realizarOperacion(self, tipo, monto):
         print(f"Realizando operación: {tipo} por un monto de {monto}...")
-
 
 class Cuenta:
     def __init__(self, id_cuenta, saldo=0):
@@ -79,7 +69,7 @@ class Cajero:
     def __init__(self, id_cajero, region):
         self.id_cajero = id_cajero
         self.region = region
-        self.billetes = {200: 0, 100: 0, 50: 0, 20: 0}  # Denominaciones y cantidades
+        self.billetes = {200: 0, 100: 0, 50: 0, 20: 0} 
 
     def agregarBilletes(self, denominacion, cantidad):
         if denominacion in self.billetes:
@@ -97,7 +87,32 @@ class Billete:
 
 #------------------------------------------------------------------------------#
 
+# Listas
+
+clientesRegistrados = []
+administradoresRegistrados = []
+cajerosRegistrados = []
+
+#------------------------------------------------------------------------------#
+
 # Menús y sub menús
+
+def gestionarAdministrador():
+    while True:
+        print("\n=== Opciones de Administrador ===")
+        print("1. Gestionar Clientes")
+        print("2. Gestionar Cajeros")
+        print("3. Regresar")
+        opcion = input("Seleccione una opción: ")
+
+        if opcion == "1":
+            gestionarClientes()
+        elif opcion == "2":
+            gestionarCajeros()
+        elif opcion == "3":
+            return
+        else:
+            print("Opción inválida. Intente nuevamente.")
 
 def gestionarClientes():
     while True:
@@ -125,9 +140,11 @@ def gestionarClientes():
         else:
             print("Opción inválida. Intente nuevamente.")
 
+            
 def modificarCliente():
     print("\n=== Modificar Cliente ===")
-    nombre = input("Ingrese el nombre del cliente a modificar: ")
+    listarClientes()
+    nombre = input("\nIngrese el nombre del cliente a modificar: ")
     for cliente in clientesRegistrados:
         if cliente.nombre == nombre:
             nuevoNombreUsuario = input("Ingrese el nuevo nombre de usuario (deje vacío para no cambiar): ")
@@ -144,7 +161,8 @@ def modificarCliente():
 
 def cambiarEstadoCliente():
     print("\n=== Cambiar Estado de Cuenta del Cliente ===")
-    nombreUsuario = input("Ingrese el nombre de usuario del cliente: ")
+    listarClientes()
+    nombreUsuario = input("/nIngrese el nombre de usuario del cliente: ")
     for cliente in clientesRegistrados:
         if cliente.nombreUsuario == nombreUsuario:
             nuevoEstado = input("¿Activar o Dar de baja? (A/D): ").upper()
@@ -161,7 +179,8 @@ def cambiarEstadoCliente():
 
 def consultarCliente():
     print("\n=== Consultar Cliente ===")
-    nombreUsuario = input("Ingrese el nombre de usuario del cliente: ")
+    listarClientes()
+    nombreUsuario = input("\nIngrese el nombre de usuario del cliente: ")
     for cliente in clientesRegistrados:
         if cliente.nombreUsuario == nombreUsuario:
             print(f"ID: {cliente.idUsuario}")
@@ -180,37 +199,71 @@ def listarClientes():
     for cliente in clientesRegistrados:
         print(f"ID: {cliente.idUsuario} | Nombre: {cliente.nombre} | Usuario: {cliente.nombreUsuario} | Estado: {cliente.estado}")
 
-
 def registrarCliente():
     print("\n=== Registro de Cliente ===")
-    nombre = input("Ingresar el nombre: ")
-    nombreUsuario = input("Ingrese el nombre de usuario: ")
     
-    if usuarioRegistrado(nombreUsuario):
-        print("Nombre de usuario ya registrado en una cuenta, ingresar otro nombre de usuario")
-        return
-        
-    contraseña = input("Ingrese la contraseña: ")
-    idUsuario = len(clientesRegistrados) + 1
-    saldoInicial = 0
-    nuevaCuenta = Cuenta(f"CU{idUsuario}", saldoInicial)
-    nuevoCliente = Cliente(idUsuario, nombre, nombreUsuario, contraseña, nuevaCuenta)
-    clientesRegistrados.append(nuevoCliente)
-    print(f"Cliente '{nombreUsuario}' registrado con éxito.")
+    while True:
+        nombre = input("Ingresar su nombre: ").strip()
+        if nombre:
+            break
+        print("El nombre no puede estar vacío. Inténtelo nuevamente.")
+    
+    while True:
+        nombreUsuario = input("Ingrese su nombre de usuario: ").strip()
+        if not nombreUsuario:
+            print("El nombre de usuario no puede estar vacío. Inténtelo nuevamente.")
+        elif usuarioRegistrado(nombreUsuario):
+            print("Nombre de usuario ya registrado en una cuenta. Ingrese otro nombre de usuario.")
+        else:
+            break
+    
+    while True:
+        contraseña = input("Ingrese su contraseña: ").strip()
+        if contraseña:
+            break
+        print("La contraseña no puede estar vacía. Inténtelo nuevamente.")
+    
+    try:
+        idUsuario = len(clientesRegistrados) + 1
+        saldoInicial = 0
+        nuevaCuenta = Cuenta(f"CU{idUsuario}", saldoInicial)
+        nuevoCliente = Cliente(idUsuario, nombre, nombreUsuario, contraseña, nuevaCuenta)
+        clientesRegistrados.append(nuevoCliente)
+        print(f"Cliente '{nombreUsuario}' registrado con éxito.")
+    except Exception as e:
+        print(f"Error al registrar el cliente: {e}")
 
 def registrarAdministrador():
     print("\n=== Registro de Administrador ===")
-    nombreUsuario = input("Ingrese el nombre usuario: ")
     
-    if usuarioRegistrado(nombreUsuario):
-        print("Nombre de usuario ya registrado en una cuenta, ingresar otro nombre de usuario")
-        return
+    while True:
+        nombre = input("Ingrese su nombre: ").strip()
+        if nombre:
+            break
+        print("El nombre no puede estar vacío. Inténtelo nuevamente.")
     
-    contraseña = input("Ingrese la contraseña: ")
-    idUsuario = len(administradoresRegistrados) + 1
-    nuevoAdmin = Administrador(idUsuario, nombreUsuario, contraseña)
-    administradoresRegistrados.append(nuevoAdmin)
-    print(f"Administrador '{nombreUsuario}' registrado con éxito.")
+    while True:
+        nombreUsuario = input("Ingrese su nombre de usuario: ").strip()
+        if not nombreUsuario:
+            print("El nombre de usuario no puede estar vacío. Inténtelo nuevamente.")
+        elif usuarioRegistrado(nombreUsuario):
+            print("Nombre de usuario ya registrado en una cuenta. Ingrese otro nombre de usuario.")
+        else:
+            break
+    
+    while True:
+        contraseña = input("Ingrese su contraseña: ").strip()
+        if contraseña:
+            break
+        print("La contraseña no puede estar vacía. Inténtelo nuevamente.")
+    
+    try:
+        idUsuario = len(administradoresRegistrados) + 1
+        nuevoAdmin = Administrador(idUsuario, nombre, nombreUsuario, contraseña)
+        administradoresRegistrados.append(nuevoAdmin)
+        print(f"Administrador '{nombre}' registrado con éxito.")
+    except Exception as e:
+        print(f"Error al registrar el administrador: {e}")
 
 def usuarioRegistrado(nombreUsuario):
     for cliente in clientesRegistrados:
@@ -222,24 +275,6 @@ def usuarioRegistrado(nombreUsuario):
             return True
     return False
     
-def gestionarAdministrador():
-    while True:
-        print("\n=== Opciones de Administrador ===")
-        print("1. Gestionar Clientes")
-        print("2. Gestionar Cajeros")
-        print("3. Regresar")
-        opcion = input("Seleccione una opción: ")
-
-        if opcion == "1":
-            gestionarClientes()
-        elif opcion == "2":
-            gestionarCajeros()
-        elif opcion == "3":
-            return
-        else:
-            print("Opción inválida. Intente nuevamente.")
-            
-
 def menuAdministrador():
     while True:
         print("\n=== Menú Administrador ===\n")
@@ -259,7 +294,7 @@ def menuAdministrador():
 
 def menuPrincipal():
     while True:
-        print("\n=== Sistema de cajeros multfuncionales CustoPay ===\n")
+        print("\n=== Sistema de cajeros multifuncionales CustoPay ===\n")
         print("[1]. Administrador")
         print("[2]. Cliente")
         print("[3]. Salir\n")
@@ -274,20 +309,53 @@ def menuPrincipal():
             break
         else:
             print("Opción inválida. Intente nuevamente.")
-            
-
 def gestionarCajeros():
     print("\nFunción para gestionar cajeros...")
-
     
 def iniciarSesionAdministrador():
     print("\n=== Inicio de Sesión Administrador ===")
-    nombre = input("Ingrese su nombre de usuario: ")
-    contraseña = input("Ingrese su contraseña: ")
+    
+    while True:
+        nombreUsuario = input("Ingrese su nombre de usuario: ").strip()
+        if nombreUsuario:
+            break
+        print("El nombre de usuario no puede estar vacío. Inténtelo nuevamente.")
+    
+    while True:
+        contraseña = input("Ingrese su contraseña: ").strip()
+        if contraseña:
+            break
+        print("La contraseña no puede estar vacía. Inténtelo nuevamente.")
+    
     for admin in administradoresRegistrados:
-        if admin.nombre == nombre and admin.contraseña == contraseña:
-            print(f"¡Bienvenido, {nombre}!")
+        if admin.nombreUsuario == nombreUsuario and admin.contraseña == contraseña:
+            print(f"¡Bienvenido, {admin.nombre}!")
             gestionarAdministrador()
+            return
+    print("Credenciales incorrectas. Intente nuevamente.")
+
+def iniciarSesionCliente():
+    print("\n=== Inicio de Sesión Cliente ===")
+    
+    while True:
+        nombreUsuario = input("Ingrese su nombre de usuario: ").strip()
+        if nombreUsuario:
+            break
+        print("El nombre de usuario no puede estar vacío. Inténtelo nuevamente.")
+    
+    while True:
+        contraseña = input("Ingrese su contraseña: ").strip()
+        if contraseña:
+            break
+        print("La contraseña no puede estar vacía. Inténtelo nuevamente.")
+    
+    for cliente in clientesRegistrados:
+        if cliente.nombreUsuario == nombreUsuario and cliente.contraseña == contraseña:
+            if cliente.estado == "Baja":
+                print("La cuenta está inactiva. Contacte al administrador.")
+                return
+            print(f"¡Bienvenido, {cliente.nombre}!")
+            clienteCajeros()
             return
     print("Credenciales incorrectas. Intente nuevamente.")
 
@@ -310,7 +378,7 @@ def menuCliente():
 
 def clienteCajeros():
     while True:
-        print("\n=== Seleccione Región===")
+        print("\n=== Seleccione Región Para Encontrar su Cajero ===")
         print("1. Cajamarca")
         print("2. Lima")
         print("3. Loreto")
@@ -327,22 +395,8 @@ def clienteCajeros():
         else:
             print("Opción inválida. Intente nuevamente.")
 
-
-def iniciarSesionCliente():
-    print("\n=== Inicio de Sesión Cliente ===")
-    nombreUsuario = input("Ingrese su nombre de usuario: ")
-    contraseña = input("Ingrese su contraseña: ")
-    for cliente in clientesRegistrados:
-        if cliente.nombreUsuario == nombreUsuario and cliente.contraseña == contraseña:
-            if cliente.estado == "Baja":
-                print("La cuenta está inactiva. Contacte al administrador.")
-                return
-            print(f"¡Bienvenido, {cliente.nombre}!")
-            clienteCajeros()
-            return
-    print("Credenciales incorrectas. Intente nuevamente.")
-
 def operacionesCliente(region):
+
     print(f"\n=== Operaciones en Cajero de Región {region} ===")
     print("1. Depositar")
     print("2. Retirar")
