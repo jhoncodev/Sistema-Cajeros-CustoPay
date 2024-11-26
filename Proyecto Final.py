@@ -1,11 +1,7 @@
 #------------------------------------------------------------------------------#
-
 # Librerias
-
 from datetime import datetime
-
 #------------------------------------------------------------------------------#
-
 # Clases
 
 class Usuario:
@@ -35,42 +31,43 @@ class Cliente(Usuario):
         print(f"Realizando operación: {tipo} por un monto de {monto}...")
 
 class Cuenta:
-    def __init__(self, id_cuenta, saldo=0):
-        self.id_cuenta = id_cuenta
+    def __init__(self, idCuenta, saldo=0):
+        self.idCuenta = idCuenta
         self.saldo = saldo
         self.movimientos = []
 
-    def depositar(self, monto):
+    def depositar(self, monto, cajero_id):
         self.saldo += monto
-        self.registrarMovimiento("Depósito", monto)
+        self.registrarMovimiento("Depósito", monto, cajero_id)
 
-    def retirar(self, monto):
+    def retirar(self, monto, cajero_id):
         if monto > self.saldo:
             print("Saldo insuficiente.")
             return False
         self.saldo -= monto
-        self.registrarMovimiento("Retiro", monto)
+        self.registrarMovimiento("Retiro", -monto, cajero_id)
         return True
 
-    def registrarMovimiento(self, tipo, monto):
-        movimiento = Movimiento(tipo, monto, datetime.now())
+    def registrarMovimiento(self, tipo, monto, cajero_id):
+        movimiento = Movimiento(tipo, monto, cajero_id)
         self.movimientos.append(movimiento)
 
 class Movimiento:
-    def __init__(self, tipo, monto, fechaHora):
+    def __init__(self, tipo, monto, cajero):
         self.tipo = tipo
         self.monto = monto
-        self.fechaHora = fechaHora
+        self.cajero = cajero
+        self.fecha = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     def __str__(self):
-        return f"{self.fecha_hora} - {self.tipo}: {self.monto}"
+        return f"{self.fecha} - {self.tipo}: {self.monto} (Cajero: {self.cajero})"
 
 class Cajero:
     def __init__(self, idCajero, region):
         self.idCajero = idCajero
         self.region = region
-        self.billetes = {200: 0, 100: 0, 50: 0, 20: 0} 
-        self.estado = "Activo" 
+        self.billetes = {200: 0, 100: 0, 50: 0, 20: 0}
+        self.estado = "Activo"
 
     def agregarBilletes(self, denominacion, cantidad):
         if denominacion in self.billetes:
@@ -79,7 +76,20 @@ class Cajero:
             print(f"Denominación {denominacion} no válida.")
 
     def retirarBilletes(self, monto):
-        print(f"Realizando desglose de {monto} en billetes...")
+        desglose = desgloseBilletesDinamico(monto, list(self.billetes.keys()))
+        if not desglose:
+            print("El cajero no tiene suficientes billetes para completar esta transacción.")
+            return None
+
+        for billete, cantidad in desglose.items():
+            if self.billetes[billete] < cantidad:
+                print(f"No hay suficientes billetes de {billete}.")
+                return None
+
+        for billete, cantidad in desglose.items():
+            self.billetes[billete] -= cantidad
+        print(f"Desglose de billetes retirados: {desglose}")
+        return desglose
 
     def cambiarEstado(self, nuevo_estado):
         if nuevo_estado in ["Activo", "Mantenimiento"]:
@@ -88,19 +98,11 @@ class Cajero:
         else:
             print("Estado no válido. Use 'Activo' o 'Mantenimiento'.")
 
-class Billete:
-    def __init__(self, denominacion, cantidad):
-        self.denominacion = denominacion
-        self.cantidad = cantidad
-
 #------------------------------------------------------------------------------#
-
 # Listas
-
 clientesRegistrados = []
 administradoresRegistrados = []
 cajerosRegistrados = []
-
 #------------------------------------------------------------------------------#
 
 # Menús y sub menús
@@ -476,8 +478,6 @@ def mostrarRegiones():
     print("[5]. Tacna")
     print("[6]. Piura")
 
-
-
 def iniciarSesionAdministrador():
     print("\n=== Inicio de Sesión Administrador ===")
     
@@ -521,7 +521,7 @@ def iniciarSesionCliente():
                 print("La cuenta está inactiva. Contacte al administrador.")
                 return
             print(f"¡Bienvenido, {cliente.nombre}!")
-            clienteCajeros()
+            clienteCajeros(cliente)
             return
     print("Credenciales incorrectas. Intente nuevamente.")
 
@@ -564,7 +564,7 @@ def seleccionarCajeroEnRegion(cajerosEnRegion):
     print("ID de cajero no válido. Intente nuevamente.")
     return None
 
-def clienteCajeros():
+def clienteCajeros(cliente):
     regiones = {
         "1": "Cajamarca",
         "2": "Lima",
@@ -587,13 +587,46 @@ def clienteCajeros():
             if cajerosEnRegion:
                 cajero = seleccionarCajeroEnRegion(cajerosEnRegion)
                 if cajero:
-                    operacionesCliente(cajero)
+                    operacionesCliente(cajero, cliente)
         elif opcion == "7":
             return
         else:
             print("Opción inválida. Intente nuevamente.")
 
-def operacionesCliente(cajero):
+def ordenarQuickSort(lista):
+    if len(lista) <= 1:
+        return lista
+    else:
+        pivote = lista[len(lista) // 2]
+        
+        izquierda = [x for x in lista if x > pivote]
+        centro = [x for x in lista if x == pivote]
+        derecha = [x for x in lista if x < pivote]
+        
+        return ordenarQuickSort(izquierda) + centro + ordenarQuickSort(derecha)
+
+def desgloseBilletesDinamico(monto, denominaciones):
+    resultados = [float('inf')] * (monto + 1)
+    resultados[0] = 0
+
+    for i in range(1, monto + 1):
+        for denominacion in denominaciones:
+            if i >= denominacion:
+                resultados[i] = min(resultados[i], resultados[i - denominacion] + 1)
+
+    desglose = {}
+    montoActual = monto
+
+    for denominacion in ordenarQuickSort(denominaciones):
+        while montoActual >= denominacion and resultados[montoActual] == resultados[montoActual - denominacion] + 1:
+            if denominacion not in desglose:
+                desglose[denominacion] = 0
+            desglose[denominacion] += 1
+            montoActual -= denominacion
+
+    return desglose if montoActual == 0 else None
+
+def operacionesCliente(cajero, cliente):
     print(f"\n=== Operaciones en Cajero ID {cajero.idCajero} - Región: {cajero.region} ===")
     while True:
         print("1. Depositar")
@@ -605,11 +638,84 @@ def operacionesCliente(cajero):
         print("7. Volver atrás")
         opcion = input("Seleccione una operación: ")
 
-        if opcion == "7":
+        if opcion == "1":
+            depositar(cajero, cliente)
+            print()
+        elif opcion == "2":
+            print()
+            retirar(cajero, cliente)
+        elif opcion == "3":
+            print("Aun no se desarrolla está función")
+        elif opcion == "4":
+            print("Aun no se desarrolla está función")
+        elif opcion == "5":
+            print("Aun no se desarrolla está función")
+        elif opcion == "6":
+            print("Aun no se desarrolla está función")
+        elif opcion == "7":
             return
         else:
-            print(f"Función en desarrollo para la operación {opcion} en el cajero {cajero.idCajero}.")
+            print("Opción inválida. Intente nuevamente.")
+            
+def depositar(cajero, cliente):
+    print("\n=== Depósito ===")
+    try:
+        monto = int(input("Ingrese el monto a depositar: "))
+        if monto <= 0:
+            print("El monto debe ser mayor a 0.")
+            return
 
+        print("Ingrese el desglose de billetes:")
+        desglose = {}
+
+        for denominacion in ordenarQuickSort(list(cajero.billetes.keys())):
+            cantidad = int(input(f"Cantidad de billetes de {denominacion}: "))
+            if cantidad < 0:
+                print("La cantidad de billetes no puede ser negativa.")
+                return
+            desglose[denominacion] = cantidad
+
+        montoDesglose = sum(denominacion * cantidad for denominacion, cantidad in desglose.items())
+        if montoDesglose != monto:
+            print(f"El monto total del desglose ({montoDesglose}) no coincide con el monto ingresado ({monto}).")
+            return
+
+        cliente.cuenta.depositar(monto, cajero.idCajero)
+        for billete, cantidad in desglose.items():
+            cajero.billetes[billete] += cantidad
+        print(f"Depósito exitoso. Nuevo saldo: {cliente.cuenta.saldo}")
+        print(f"Desglose de billetes depositados: {desglose}")
+    except ValueError:
+        print("Entrada no válida. Debe ingresar un número entero.")
+
+def retirar(cajero, cliente):
+    print("\n=== Retiro ===")
+    try:
+        monto = int(input("Ingrese el monto a retirar: "))
+        if monto <= 0:
+            print("El monto debe ser mayor a 0.")
+            return
+        if monto > cliente.cuenta.saldo:
+            print("Saldo insuficiente en la cuenta.")
+            return
+
+        desglose = desgloseBilletesDinamico(monto, list(cajero.billetes.keys()))
+        if not desglose:
+            print("El cajero no tiene suficientes billetes para completar esta transacción.")
+            return
+
+        for billete, cantidad in desglose.items():
+            if cajero.billetes[billete] < cantidad:
+                print(f"El cajero no tiene suficientes billetes de {billete}.")
+                return
+
+        cliente.cuenta.retirar(monto, cajero.idCajero)
+        for billete, cantidad in desglose.items():
+            cajero.billetes[billete] -= cantidad
+        print(f"Retiro exitoso. Nuevo saldo: {cliente.cuenta.saldo}")
+        print(f"Desglose de billetes entregados: {desglose}")
+    except ValueError:
+        print("Entrada no válida. Debe ingresar un número entero.")
 
 #------------------------------------------------------------------------------#
 
