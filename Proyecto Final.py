@@ -38,7 +38,7 @@ class Cuenta:
     def __init__(self, id_cuenta, saldo=0):
         self.id_cuenta = id_cuenta
         self.saldo = saldo
-        self.movimientos = []  # Lista de movimientos asociados a la cuenta
+        self.movimientos = []
 
     def depositar(self, monto):
         self.saldo += monto
@@ -57,19 +57,20 @@ class Cuenta:
         self.movimientos.append(movimiento)
 
 class Movimiento:
-    def __init__(self, tipo, monto, fecha_hora):
+    def __init__(self, tipo, monto, fechaHora):
         self.tipo = tipo
         self.monto = monto
-        self.fecha_hora = fecha_hora
+        self.fechaHora = fechaHora
 
     def __str__(self):
         return f"{self.fecha_hora} - {self.tipo}: {self.monto}"
 
 class Cajero:
-    def __init__(self, id_cajero, region):
-        self.id_cajero = id_cajero
+    def __init__(self, idCajero, region):
+        self.idCajero = idCajero
         self.region = region
         self.billetes = {200: 0, 100: 0, 50: 0, 20: 0} 
+        self.estado = "Activo" 
 
     def agregarBilletes(self, denominacion, cantidad):
         if denominacion in self.billetes:
@@ -79,6 +80,13 @@ class Cajero:
 
     def retirarBilletes(self, monto):
         print(f"Realizando desglose de {monto} en billetes...")
+
+    def cambiarEstado(self, nuevo_estado):
+        if nuevo_estado in ["Activo", "Mantenimiento"]:
+            self.estado = nuevo_estado
+            print(f"Cajero {self.idCajero} en región '{self.region}' actualizado a estado: {self.estado}.")
+        else:
+            print("Estado no válido. Use 'Activo' o 'Mantenimiento'.")
 
 class Billete:
     def __init__(self, denominacion, cantidad):
@@ -96,6 +104,25 @@ cajerosRegistrados = []
 #------------------------------------------------------------------------------#
 
 # Menús y sub menús
+
+def menuPrincipal():
+    
+    while True:
+        print("\n=== Sistema de cajeros multifuncionales CustoPay ===\n")
+        print("[1]. Administrador")
+        print("[2]. Cliente")
+        print("[3]. Salir\n")
+        opcion = input("Seleccione una opción: ")
+
+        if opcion == "1":
+            menuAdministrador()
+        elif opcion == "2":
+            menuCliente()
+        elif opcion == "3":
+            print("Gracias por usar el sistema. ¡Hasta luego!")
+            break
+        else:
+            print("Opción inválida. Intente nuevamente.")
 
 def gestionarAdministrador():
     while True:
@@ -139,8 +166,7 @@ def gestionarClientes():
             return
         else:
             print("Opción inválida. Intente nuevamente.")
-
-            
+         
 def modificarCliente():
     print("\n=== Modificar Cliente ===")
     listarClientes()
@@ -162,7 +188,7 @@ def modificarCliente():
 def cambiarEstadoCliente():
     print("\n=== Cambiar Estado de Cuenta del Cliente ===")
     listarClientes()
-    nombreUsuario = input("/nIngrese el nombre de usuario del cliente: ")
+    nombreUsuario = input("\nIngrese el nombre de usuario del cliente: ")
     for cliente in clientesRegistrados:
         if cliente.nombreUsuario == nombreUsuario:
             nuevoEstado = input("¿Activar o Dar de baja? (A/D): ").upper()
@@ -292,26 +318,166 @@ def menuAdministrador():
         else:
             print("Opción inválida. Intente nuevamente.")
 
-def menuPrincipal():
+def gestionarCajeros():
     while True:
-        print("\n=== Sistema de cajeros multifuncionales CustoPay ===\n")
-        print("[1]. Administrador")
-        print("[2]. Cliente")
-        print("[3]. Salir\n")
+        print("\n=== Gestión de Cajeros ===")
+        print("[1]. Agregar Cajero")
+        print("[2]. Modificar Cajero")
+        print("[3]. Cambiar Estado del Cajero")
+        print("[4]. Consultar Cajero")
+        print("[5]. Listar Cajeros")
+        print("[6]. Regresar")
         opcion = input("Seleccione una opción: ")
 
         if opcion == "1":
-            menuAdministrador()
+            agregarCajero()
         elif opcion == "2":
-            menuCliente()
+            modificarCajero()
         elif opcion == "3":
-            print("Gracias por usar el sistema. ¡Hasta luego!")
-            break
+            cambiarEstadoCajero()
+        elif opcion == "4":
+            consultarCajero()
+        elif opcion == "5":
+            listarCajeros()
+        elif opcion == "6":
+            return
         else:
             print("Opción inválida. Intente nuevamente.")
-def gestionarCajeros():
-    print("\nFunción para gestionar cajeros...")
+
+def agregarCajero():
+    print("\n=== Agregar Cajero ===")
+    mostrarRegiones()
+    opcionRegion = input("Seleccione una región para el nuevo cajero: ")
     
+    regiones = {
+        "1": "Cajamarca",
+        "2": "Lima",
+        "3": "Loreto",
+        "4": "Cuzco",
+        "5": "Tacna",
+        "6": "Piura"
+    }
+    
+    region = regiones.get(opcionRegion)
+    if region:
+        idCajero = len(cajerosRegistrados) + 1
+        nuevoCajero = Cajero(idCajero, region)
+        cajerosRegistrados.append(nuevoCajero)
+        print(f"Cajero agregado con éxito: ID {idCajero}, Región {region}.")
+    else:
+        print("Opción inválida. Intente nuevamente.")
+
+def modificarCajero():
+    print("\n=== Modificar Cajero ===")
+
+    if cajerosRegistrados:
+        print("Seleccione el cajero que desea modificar:")
+        for cajero in enumerate(cajerosRegistrados, start=1):
+            print(f"ID: {cajero.idCajero}, Región: {cajero.region}")
+    
+        try:
+            opcion = int(input("Seleccione un cajero por número: "))
+            if opcion < 1 or opcion > len(cajerosRegistrados):
+                print("Opción inválida. Intente nuevamente.")
+                return
+            cajero = cajerosRegistrados[opcion - 1]
+        except ValueError:
+            print("Entrada no válida. Debe ingresar un número.")
+            return
+    
+    
+        print("\n=== Regiones Disponibles ===")
+        regiones = ["Cajamarca", "Lima", "Loreto", "Cuzco", "Tacna", "Piura"]
+        for idx, region in enumerate(regiones, start=1):
+            print(f"[{idx}]. {region}")
+    
+        try:
+            opcionRegion = int(input("fSeleccione la nueva región para el cajero {opcion}: "))
+            if opcionRegion < 1 or opcionRegion > len(regiones):
+                print("Opción inválida. Intente nuevamente.")
+                return
+            nuevaRegion = regiones[opcionRegion - 1]
+            if nuevaRegion  == cajero.region:
+                print("El cajero ya pertenece a esa región. No se realizaron cambios.")
+            else:
+                cajero.region = nuevaRegion 
+                print(f"Cajero {cajero.idCajero} actualizado con nueva región: {nuevaRegion}.")
+        except ValueError:
+            print("Entrada no válida. Debe ingresar un número.")
+    else:
+        print("No hay cajeros registrados")
+
+def cambiarEstadoCajero():
+    print("\n=== Cambiar Estado del Cajero ===")
+    
+    print("Cajeros disponibles:")
+    for cajero in cajerosRegistrados:
+        print(f"ID: {cajero.idCajero} | Región: {cajero.region} | Estado: {cajero.estado}")
+
+    idCajero = input("\nIngrese el ID del cajero que desea gestionar: ").strip()
+    for cajero in cajerosRegistrados:
+        if str(cajero.idCajero) == idCajero:
+            print(f"\nCajero seleccionado: ID {cajero.idCajero}, Región: {cajero.region}, Estado actual: {cajero.estado}")
+            print("Seleccione el nuevo estado:")
+            print("[1]. Activar")
+            print("[2]. Colocar en Mantenimiento")
+            opcion = input("Seleccione una opción: ").strip()
+
+            if opcion == "1":
+                if cajero.estado == "Activo":
+                    print("El cajero ya está activo. No se realizaron cambios.")
+                else:
+                    cajero.estado = "Activo"
+                    print(f"Cajero {cajero.idCajero} activado con éxito.")
+            elif opcion == "2":
+                if cajero.estado == "Mantenimiento":
+                    print("El cajero ya está en mantenimiento. No se realizaron cambios.")
+                else:
+                    cajero.estado = "Mantenimiento"
+                    print(f"Cajero {cajero.idCajero} colocado en mantenimiento con éxito.")
+            else:
+                print("Opción no válida. Intente nuevamente.")
+            return
+    print("ID de cajero no encontrado. Intente nuevamente.")
+
+def consultarCajero():
+    print("\n=== Consultar Cajero ===")
+    print("Cajeros disponibles:")
+    
+    for cajero in cajerosRegistrados:
+        print(f"ID: {cajero.idCajero} | Región: {cajero.region}")
+
+    idCajero = input("\nIngrese el ID del cajero que desea consultar: ").strip()
+    for cajero in cajerosRegistrados:
+        if str(cajero.idCajero) == idCajero:
+            
+            print(f"\n=== Detalles del Cajero ID {cajero.idCajero} ===")
+            print(f"ID: {cajero.idCajero}")
+            print(f"Región: {cajero.region}")
+            print(f"Estado: {cajero.estado}")
+            print(f"Billetes: {cajero.billetes}")
+            return
+    print("ID de cajero no encontrado. Intente nuevamente.")
+
+def listarCajeros():
+    print("\n=== Listar Cajeros ===")
+    if not cajerosRegistrados:
+        print("No hay cajeros registrados.")
+        return
+    for cajero in cajerosRegistrados:
+        print(f"ID: {cajero.idCajero} | Región: {cajero.region} | Estado: {cajero.estado} | Billetes: {cajero.billetes}")
+        
+def mostrarRegiones():
+    print("\n=== Regiones Disponibles ===")
+    print("[1]. Cajamarca")
+    print("[2]. Lima")
+    print("[3]. Loreto")
+    print("[4]. Cuzco")
+    print("[5]. Tacna")
+    print("[6]. Piura")
+
+
+
 def iniciarSesionAdministrador():
     print("\n=== Inicio de Sesión Administrador ===")
     
@@ -376,41 +542,74 @@ def menuCliente():
         else:
             print("Opción inválida. Intente nuevamente.")
 
+def mostrarCajerosPorRegion(region):
+    cajerosEnRegion = [cajero for cajero in cajerosRegistrados if cajero.region == region]
+    if not cajerosEnRegion:
+        print(f"No hay cajeros disponibles en la región {region}.")
+        return None
+    print(f"\n=== Cajeros Disponibles en Región: {region} ===")
+    for cajero in cajerosEnRegion:
+        print(f"ID: {cajero.idCajero} | Estado: {cajero.estado}")
+    return cajerosEnRegion
+
+def seleccionarCajeroEnRegion(cajerosEnRegion):
+    idCajero = input("Ingrese el ID del cajero que desea utilizar: ")
+    for cajero in cajerosEnRegion:
+        if str(cajero.idCajero) == idCajero:
+            if cajero.estado == "Activo":
+                return cajero
+            else:
+                print("El cajero seleccionado está en mantenimiento. Intente con otro.")
+                return None
+    print("ID de cajero no válido. Intente nuevamente.")
+    return None
+
 def clienteCajeros():
+    regiones = {
+        "1": "Cajamarca",
+        "2": "Lima",
+        "3": "Loreto",
+        "4": "Cuzco",
+        "5": "Tacna",
+        "6": "Piura"
+    }
+
     while True:
         print("\n=== Seleccione Región Para Encontrar su Cajero ===")
-        print("1. Cajamarca")
-        print("2. Lima")
-        print("3. Loreto")
-        print("4. Cuzco")
-        print("5. Tacna")
-        print("6. Piura")
-        print("7. Regresar")
+        for clave, region in regiones.items():
+            print(f"[{clave}]. {region}")
+        print("[7]. Regresar")
         opcion = input("Seleccione una región: ")
 
-        if opcion in ["1", "2", "3", "4", "5", "6"]:
-            operacionesCliente(opcion)
+        if opcion in regiones:
+            region = regiones[opcion]
+            cajerosEnRegion = mostrarCajerosPorRegion(region)
+            if cajerosEnRegion:
+                cajero = seleccionarCajeroEnRegion(cajerosEnRegion)
+                if cajero:
+                    operacionesCliente(cajero)
         elif opcion == "7":
             return
         else:
             print("Opción inválida. Intente nuevamente.")
 
-def operacionesCliente(region):
+def operacionesCliente(cajero):
+    print(f"\n=== Operaciones en Cajero ID {cajero.idCajero} - Región: {cajero.region} ===")
+    while True:
+        print("1. Depositar")
+        print("2. Retirar")
+        print("3. Transferir")
+        print("4. Pagar Servicios")
+        print("5. Consultar Saldo")
+        print("6. Consultar Movimientos")
+        print("7. Volver atrás")
+        opcion = input("Seleccione una operación: ")
 
-    print(f"\n=== Operaciones en Cajero de Región {region} ===")
-    print("1. Depositar")
-    print("2. Retirar")
-    print("3. Transferir")
-    print("4. Pagar Servicios")
-    print("5. Consultar Saldo")
-    print("6. Consultar Movimientos")
-    print("7. Volver atrás")
-    opcion = input("Seleccione una operación: ")
+        if opcion == "7":
+            return
+        else:
+            print(f"Función en desarrollo para la operación {opcion} en el cajero {cajero.idCajero}.")
 
-    if opcion == "7":
-        return
-    else:
-        print("Función en desarrollo...")
 
 #------------------------------------------------------------------------------#
 
