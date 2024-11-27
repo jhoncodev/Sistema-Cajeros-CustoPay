@@ -656,14 +656,16 @@ def desgloseBilletesDinamico(monto, denominaciones, billetesDisponibles):
     denominaciones = sorted(denominaciones, reverse=True)
     desglose = {}
     montoActual = monto
+    copiaBilletes = billetesDisponibles.copy()
 
     for denominacion in denominaciones:
-        while montoActual >= denominacion and billetesDisponibles[denominacion] > 0:
-            if denominacion not in desglose:
-                desglose[denominacion] = 0
-            desglose[denominacion] += 1
-            billetesDisponibles[denominacion] -= 1
-            montoActual -= denominacion
+        cantidadNecesaria = montoActual // denominacion
+        cantidadDisponible = copiaBilletes[denominacion]
+        cantidadAUsar = min(cantidadNecesaria, cantidadDisponible)
+
+        if cantidadAUsar > 0:
+            desglose[denominacion] = cantidadAUsar
+            montoActual -= cantidadAUsar * denominacion
 
     if montoActual != 0:
         return None
@@ -685,6 +687,7 @@ def retirar(cajero, cliente):
             print("El cajero no tiene suficientes billetes para completar esta transacción.")
             return
 
+        # Actualizamos el saldo del cliente y los billetes del cajero
         cliente.cuenta.retirar(monto, cajero.idCajero)
         for billete, cantidad in desglose.items():
             cajero.billetes[billete] -= cantidad
