@@ -653,21 +653,12 @@ def depositar(cajero, cliente):
 
 
 def desgloseBilletesDinamico(monto, denominaciones, billetesDisponibles):
-    resultados = [float('inf')] * (monto + 1)
-    resultados[0] = 0
-
-    for i in range(1, monto + 1):
-        for denominacion in denominaciones:
-            if i >= denominacion:
-                resultados[i] = min(resultados[i], resultados[i - denominacion] + 1)
-
+    denominaciones = sorted(denominaciones, reverse=True)
     desglose = {}
     montoActual = monto
 
-    for denominacion in sorted(denominaciones, reverse=True):
-        while (montoActual >= denominacion and 
-               resultados[montoActual] == resultados[montoActual - denominacion] + 1 and 
-               billetesDisponibles[denominacion] > 0):
+    for denominacion in denominaciones:
+        while montoActual >= denominacion and billetesDisponibles[denominacion] > 0:
             if denominacion not in desglose:
                 desglose[denominacion] = 0
             desglose[denominacion] += 1
@@ -677,7 +668,6 @@ def desgloseBilletesDinamico(monto, denominaciones, billetesDisponibles):
     if montoActual != 0:
         return None
     return desglose
-
 
 def retirar(cajero, cliente):
     print("\n=== Retiro ===")
@@ -702,7 +692,6 @@ def retirar(cajero, cliente):
         print(f"Desglose de billetes entregados: {desglose}")
     except ValueError:
         print("Entrada no válida. Debe ingresar un número entero.")
-
 
 
 
