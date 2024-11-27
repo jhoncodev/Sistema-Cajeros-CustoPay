@@ -75,22 +75,6 @@ class Cajero:
         else:
             print(f"Denominación {denominacion} no válida.")
 
-    def retirarBilletes(self, monto):
-        desglose = desgloseBilletesDinamico(monto, list(self.billetes.keys()))
-        if not desglose:
-            print("El cajero no tiene suficientes billetes para completar esta transacción.")
-            return None
-
-        for billete, cantidad in desglose.items():
-            if self.billetes[billete] < cantidad:
-                print(f"No hay suficientes billetes de {billete}.")
-                return None
-
-        for billete, cantidad in desglose.items():
-            self.billetes[billete] -= cantidad
-        print(f"Desglose de billetes retirados: {desglose}")
-        return desglose
-
     def cambiarEstado(self, nuevo_estado):
         if nuevo_estado in ["Activo", "Mantenimiento"]:
             self.estado = nuevo_estado
@@ -672,13 +656,11 @@ def desgloseBilletesDinamico(monto, denominaciones, billetesDisponibles):
     resultados = [float('inf')] * (monto + 1)
     resultados[0] = 0
 
-    # Construir tabla de resultados con programación dinámica
     for i in range(1, monto + 1):
         for denominacion in denominaciones:
             if i >= denominacion:
                 resultados[i] = min(resultados[i], resultados[i - denominacion] + 1)
 
-    # Reconstrucción del desglose respetando los billetes disponibles
     desglose = {}
     montoActual = monto
 
@@ -692,7 +674,6 @@ def desgloseBilletesDinamico(monto, denominaciones, billetesDisponibles):
             billetesDisponibles[denominacion] -= 1
             montoActual -= denominacion
 
-    # Validar si se pudo completar el monto
     if montoActual != 0:
         return None
     return desglose
@@ -709,13 +690,11 @@ def retirar(cajero, cliente):
             print("Saldo insuficiente en la cuenta.")
             return
 
-        # Intentar desglose
         desglose = desgloseBilletesDinamico(monto, list(cajero.billetes.keys()), cajero.billetes.copy())
         if not desglose:
             print("El cajero no tiene suficientes billetes para completar esta transacción.")
             return
 
-        # Actualizar saldo del cliente y billetes del cajero
         cliente.cuenta.retirar(monto, cajero.idCajero)
         for billete, cantidad in desglose.items():
             cajero.billetes[billete] -= cantidad
