@@ -40,18 +40,17 @@ class Cuenta:
         self.saldo += monto
         self.registrarMovimiento("Depósito", monto, cajero_id)
 
-    def retirar(self, monto, cajero_id):
+    def retirar(self, monto, cajero_id, registrar=True):
         if monto > self.saldo:
             print("Saldo insuficiente.")
             return False
         self.saldo -= monto
-        self.registrarMovimiento("Retiro", -monto, cajero_id)
         return True
+
 
     def registrarMovimiento(self, tipo, monto, cajero_id, detalle=None):
         movimiento = Movimiento(tipo, monto, cajero_id, detalle)
         self.movimientos.append(movimiento)
-
 
 class Movimiento:
     def __init__(self, tipo, monto, cajero=None, detalle=None):
@@ -67,7 +66,6 @@ class Movimiento:
             detalles += f" (Cajero: {self.cajero})"
         detalles += f" - {self.detalle}"
         return detalles
-
 
 class Cajero:
     def __init__(self, idCajero, region):
@@ -120,6 +118,79 @@ def menuPrincipal():
         else:
             print("Opción inválida. Intente nuevamente.")
 
+def menuAdministrador():
+    while True:
+        print("\n=== Menú Administrador ===\n")
+        print("1. Iniciar sesión")
+        print("2. Registrarse")
+        print("3. Cambiar contraseña")
+        print("4. Volver atrás\n")
+        opcion = input("Seleccione una opción: ")
+
+        if opcion == "1":
+            iniciarSesionAdministrador()
+        elif opcion == "2":
+            registrarAdministrador()
+        elif opcion == "3":
+            cambiarContraseña(administradoresRegistrados)
+        elif opcion == "4":
+            return
+        else:
+            print("Opción inválida. Intente nuevamente.")
+            
+def cambiarContraseña(listaUsuarios):
+    print("\n=== Cambiar Contraseña ===")
+
+    while True:
+        nombreUsuario = input("Ingrese su nombre de usuario: ").strip()
+        if nombreUsuario:
+            break
+        print("El nombre de usuario no puede estar vacío. Inténtelo nuevamente.")
+
+    while True:
+        contraseñaActual = input("Ingrese su contraseña actual: ").strip()
+        if contraseñaActual:
+            break
+        print("La contraseña no puede estar vacía. Inténtelo nuevamente.")
+
+    for usuario in listaUsuarios:
+        if usuario.nombreUsuario == nombreUsuario and usuario.contraseña == contraseñaActual:
+            while True:
+                nuevaContraseña = input("Ingrese la nueva contraseña: ").strip()
+                confirmarContraseña = input("Confirme la nueva contraseña: ").strip()
+
+                if not nuevaContraseña:
+                    print("La nueva contraseña no puede estar vacía. Inténtelo nuevamente.")
+                elif nuevaContraseña != confirmarContraseña:
+                    print("Las contraseñas no coinciden. Inténtelo nuevamente.")
+                else:
+                    usuario.contraseña = nuevaContraseña
+                    print("Contraseña actualizada con éxito.")
+                    return
+    print("Credenciales incorrectas. Intente nuevamente.")
+
+def iniciarSesionAdministrador():
+    print("\n=== Inicio de Sesión Administrador ===")
+    
+    while True:
+        nombreUsuario = input("Ingrese su nombre de usuario: ").strip()
+        if nombreUsuario:
+            break
+        print("El nombre de usuario no puede estar vacío. Inténtelo nuevamente.")
+    
+    while True:
+        contraseña = input("Ingrese su contraseña: ").strip()
+        if contraseña:
+            break
+        print("La contraseña no puede estar vacía. Inténtelo nuevamente.")
+    
+    for admin in administradoresRegistrados:
+        if admin.nombreUsuario == nombreUsuario and admin.contraseña == contraseña:
+            print(f"¡Bienvenido, {admin.nombre}!")
+            gestionarAdministrador()
+            return
+    print("Credenciales incorrectas. Intente nuevamente.")
+    
 def gestionarAdministrador():
     while True:
         print("\n=== Opciones de Administrador ===")
@@ -133,6 +204,7 @@ def gestionarAdministrador():
         elif opcion == "2":
             gestionarCajeros()
         elif opcion == "3":
+            
             return
         else:
             print("Opción inválida. Intente nuevamente.")
@@ -162,76 +234,159 @@ def gestionarClientes():
             return
         else:
             print("Opción inválida. Intente nuevamente.")
-         
+
+def busquedaBinaria(lista, campo, valor):
+    valor = valor.lower()
+    izquierda = 0
+    derecha = len(lista) - 1
+
+    while izquierda <= derecha:
+        medio = (izquierda + derecha) // 2
+        atributo = getattr(lista[medio], campo).lower()
+        if atributo == valor:
+            return medio
+        elif atributo < valor:
+            izquierda = medio + 1
+        else:
+            derecha = medio - 1
+
+    return -1 
+ 
+def mostrarClientes():
+    if not clientesRegistrados:
+        print("No hay clientes registrados.")
+        return False
+    
+    print(f"{'ID'.ljust(10)}{'Nombre'.ljust(20)}{'Usuario'.ljust(20)}{'Estado'.ljust(10)}")
+    print("-" * 60)
+    for cliente in clientesRegistrados:
+        print(f"{str(cliente.idUsuario).ljust(10)}{cliente.nombre.ljust(20)}{cliente.nombreUsuario.ljust(20)}{cliente.estado.ljust(10)}")
+    
+    return True
+    
 def modificarCliente():
     print("\n=== Modificar Cliente ===")
-    listarClientes()
-    nombre = input("\nIngrese el nombre del cliente a modificar: ")
-    for cliente in clientesRegistrados:
-        if cliente.nombre == nombre:
-            nuevoNombreUsuario = input("Ingrese el nuevo nombre de usuario (deje vacío para no cambiar): ")
-            nuevaContraseña = input("Ingrese la nueva contraseña (deje vacío para no cambiar): ")
+    
+    if not mostrarClientes():
+        return
 
-            if nuevoNombreUsuario:
-                cliente.nombreUsuario = nuevoNombreUsuario
-            if nuevaContraseña:
-                cliente.contraseña = nuevaContraseña
+    clientesOrdenados = quickSort(clientesRegistrados, 'nombreUsuario')
+    
+    nombre = input("\nIngrese el nombre de usuario del cliente: ").strip()
 
-            print("Cliente modificado con éxito.")
-            return
-    print(f"Cliente con nombre '{nombre}' no encontrado.")
+    indice = busquedaBinaria(clientesOrdenados, 'nombreUsuario', nombre)
+    if indice != -1:
+        cliente = clientesOrdenados[indice]
+        nuevoNombreUsuario = input("Ingrese el nuevo nombre de usuario (deje vacío para no cambiar): ")
+        nuevaContraseña = input("Ingrese la nueva contraseña (deje vacío para no cambiar): ")
+
+        if nuevoNombreUsuario:
+            cliente.nombreUsuario = nuevoNombreUsuario
+        if nuevaContraseña:
+            cliente.contraseña = nuevaContraseña
+
+        print("Cliente modificado con éxito.")
+    else:
+        print(f"Cliente con nombre '{nombre}' no encontrado.")
 
 def cambiarEstadoCliente():
     print("\n=== Cambiar Estado de Cuenta del Cliente ===")
-    listarClientes()
-    nombreUsuario = input("\nIngrese el nombre de usuario del cliente: ")
-    for cliente in clientesRegistrados:
-        if cliente.nombreUsuario == nombreUsuario:
-            nuevoEstado = input("¿Activar o Dar de baja? (A/D): ").upper()
-            if nuevoEstado == "A":
-                cliente.estado = "Activo"
-                print(f"Cuenta del cliente '{nombreUsuario}' activada.")
-            elif nuevoEstado == "D":
-                cliente.estado = "Baja"
-                print(f"Cuenta del cliente '{nombreUsuario}' dada de baja.")
+    
+    if not mostrarClientes():
+        return
+
+    clientesOrdenados = quickSort(clientesRegistrados, 'nombreUsuario')
+    
+    nombreUsuario = input("\nIngrese el nombre de usuario del cliente: ").strip()
+
+    indice = busquedaBinaria(clientesOrdenados, 'nombreUsuario', nombreUsuario)
+    if indice != -1:
+        cliente = clientesOrdenados[indice]
+        nuevoEstado = input("¿Activar o Dar de baja? (A/D): ").upper()
+        if nuevoEstado == "A":
+            if cliente.estado == "Activo":
+                print("La cuenta del cliente ya está activa, no se realizan cambios")
             else:
-                print("Opción inválida.")
+                cliente.estado = 'Activo'
+                print(f"Cuenta del cliente '{nombreUsuario}' activada.")
+        elif nuevoEstado == "D":
+            if cliente.estado == "Baja":
+                print("La cuenta del cliente ya está dada de baja, no se realizan cambios")
+            else:
+                cliente.estado = 'Baja'
+                print(f"Cuenta del cliente '{nombreUsuario}' dada de baja.")
+        else:
+            print("Opción inválida.")
             return
-    print(f"Cliente con nombre de usuario '{nombreUsuario}' no encontrado.")
+    else:
+        print(f"Cliente con nombre de usuario '{nombreUsuario}' no encontrado.")
 
 def consultarCliente():
     print("\n=== Consultar Cliente ===")
-    listarClientes()
-    nombreUsuario = input("\nIngrese el nombre de usuario del cliente: ")
-    for cliente in clientesRegistrados:
-        if cliente.nombreUsuario == nombreUsuario:
-            print(f"ID: {cliente.idUsuario}")
-            print(f"Nombre: {cliente.nombre}")
-            print(f"Nombre de usuario: {cliente.nombreUsuario}")
-            print(f"Saldo: {cliente.cuenta.saldo}")
-            print(f"Estado: {cliente.estado}")
-            return
-    print(f"Cliente con nombre de usuario '{nombreUsuario}' no encontrado.")
+    
+    if not mostrarClientes():
+        return
+
+    clientesOrdenados = quickSort(clientesRegistrados, 'nombreUsuario')
+        
+    nombreUsuario = input("\nIngrese el nombre de usuario del cliente: ").strip()
+
+    indice = busquedaBinaria(clientesOrdenados, 'nombreUsuario', nombreUsuario)
+    if indice != -1:
+        cliente = clientesOrdenados[indice]
+        print(f"ID: {cliente.idUsuario}")
+        print(f"Nombre: {cliente.nombre}")
+        print(f"Nombre de usuario: {cliente.nombreUsuario}")
+        print(f"Saldo: {cliente.cuenta.saldo}")
+        print(f"Estado: {cliente.estado}")
+    else:
+        print(f"Cliente con nombre de usuario '{nombreUsuario}' no encontrado.")
+
+def quickSort(listaDesordenada, campo):
+    if len(listaDesordenada) <= 1:
+        return listaDesordenada
+    pivote = listaDesordenada[len(listaDesordenada) // 2] 
+    izquierda = [cliente for cliente in listaDesordenada if getattr(cliente, campo) < getattr(pivote, campo)]
+    medio = [cliente for cliente in listaDesordenada if getattr(cliente, campo) == getattr(pivote, campo)]
+    derecha = [cliente for cliente in listaDesordenada if getattr(cliente, campo) > getattr(pivote, campo)]
+    return quickSort(izquierda, campo) + medio + quickSort(derecha, campo)
 
 def listarClientes():
     print("\n=== Listar Clientes ===")
     if not clientesRegistrados:
         print("No hay clientes registrados.")
         return
-    for cliente in clientesRegistrados:
-        print(f"ID: {cliente.idUsuario} | Nombre: {cliente.nombre} | Usuario: {cliente.nombreUsuario} | Estado: {cliente.estado}")
+    
+    print("¿Cómo deseas ordenar la lista de clientes?")
+    print("1. Ordenar por nombre")
+    print("2. Ordenar por ID")
+    opcion = input("Selecciona una opción: ")
+
+    if opcion == '1':
+        clientesOrdenados = quickSort(clientesRegistrados, 'nombre')
+    elif opcion == '2':
+        clientesOrdenados = quickSort(clientesRegistrados, 'idUsuario')
+    else:
+        print("Opción no válida.")
+        return -1
+
+    print(f"{'ID'.ljust(10)}{'Nombre'.ljust(20)}{'Usuario'.ljust(20)}{'Estado'.ljust(10)}")
+    print("-" * 60)
+    
+    for cliente in clientesOrdenados:
+        print(f"{str(cliente.idUsuario).ljust(10)}{cliente.nombre.ljust(20)}{cliente.nombreUsuario.ljust(20)}{cliente.estado.ljust(10)}")
 
 def registrarCliente():
     print("\n=== Registro de Cliente ===")
     
     while True:
-        nombre = input("Ingresar su nombre: ").strip()
+        nombre = input("Ingresar el nombre: ").strip()
         if nombre:
             break
         print("El nombre no puede estar vacío. Inténtelo nuevamente.")
     
     while True:
-        nombreUsuario = input("Ingrese su nombre de usuario: ").strip()
+        nombreUsuario = input("Ingrese el nombre de usuario: ").strip()
         if not nombreUsuario:
             print("El nombre de usuario no puede estar vacío. Inténtelo nuevamente.")
         elif usuarioRegistrado(nombreUsuario):
@@ -240,7 +395,7 @@ def registrarCliente():
             break
     
     while True:
-        contraseña = input("Ingrese su contraseña: ").strip()
+        contraseña = input("Ingrese la contraseña: ").strip()
         if contraseña:
             break
         print("La contraseña no puede estar vacía. Inténtelo nuevamente.")
@@ -296,23 +451,6 @@ def usuarioRegistrado(nombreUsuario):
         if administrador.nombreUsuario == nombreUsuario:
             return True
     return False
-    
-def menuAdministrador():
-    while True:
-        print("\n=== Menú Administrador ===\n")
-        print("1. Iniciar sesión")
-        print("2. Registrarse")
-        print("3. Volver atrás\n")
-        opcion = input("Seleccione una opción: ")
-
-        if opcion == "1":
-            iniciarSesionAdministrador()
-        elif opcion == "2":
-            registrarAdministrador()
-        elif opcion == "3":
-            return
-        else:
-            print("Opción inválida. Intente nuevamente.")
 
 def gestionarCajeros():
     while True:
@@ -363,52 +501,57 @@ def agregarCajero():
     else:
         print("Opción inválida. Intente nuevamente.")
 
+def mostrarCajeros():
+    if not cajerosRegistrados:
+        print("No hay cajeros registrados.")
+        return False
+
+    print(f"{'ID'.ljust(10)}{'Región'.ljust(15)}")
+    print("-" * 25)
+    for cajero in cajerosRegistrados:
+        print(f"{str(cajero.idCajero).ljust(10)}{cajero.region.ljust(15)}")
+    return True
+
 def modificarCajero():
     print("\n=== Modificar Cajero ===")
-
-    if cajerosRegistrados:
-        print("Seleccione el cajero que desea modificar:")
-        for cajero in cajerosRegistrados:
-            print(f"ID: {cajero.idCajero}, Región: {cajero.region}")
     
-        try:
-            opcion = int(input("Seleccione un cajero por número: "))
-            if opcion < 1 or opcion > len(cajerosRegistrados):
-                print("Opción inválida. Intente nuevamente.")
-                return
-            cajero = cajerosRegistrados[opcion - 1]
-        except ValueError:
-            print("Entrada no válida. Debe ingresar un número.")
+    if not mostrarCajeros():
+        return
+    
+    try:
+        opcion = int(input("\nSeleccione un cajero por su id: "))
+        if opcion < 1 or opcion > len(cajerosRegistrados):
+            print("Opción inválida. Intente nuevamente.")
             return
-    
-    
-        print("\n=== Regiones Disponibles ===")
-        regiones = ["Cajamarca", "Lima", "Loreto", "Cuzco", "Tacna", "Piura"]
-        for idx, region in enumerate(regiones, start=1):
-            print(f"[{idx}]. {region}")
-    
-        try:
-            opcionRegion = int(input(f"Seleccione la nueva región para el cajero {opcion}: "))
-            if opcionRegion < 1 or opcionRegion > len(regiones):
-                print("Opción inválida. Intente nuevamente.")
-                return
-            nuevaRegion = regiones[opcionRegion - 1]
-            if nuevaRegion  == cajero.region:
-                print("El cajero ya pertenece a esa región. No se realizaron cambios.")
-            else:
-                cajero.region = nuevaRegion 
-                print(f"Cajero {cajero.idCajero} actualizado con nueva región: {nuevaRegion}.")
-        except ValueError:
-            print("Entrada no válida. Debe ingresar un número.")
-    else:
-        print("No hay cajeros registrados")
+        cajero = cajerosRegistrados[opcion - 1]
+    except ValueError:
+        print("Entrada no válida. Debe ingresar un número.")
+        return
+
+    print("\n=== Regiones Disponibles ===")
+    regiones = ["Cajamarca", "Lima", "Loreto", "Cuzco", "Tacna", "Piura"]
+    for idx, region in enumerate(regiones, start=1):
+        print(f"[{idx}]. {region}")
+
+    try:
+        opcionRegion = int(input(f"Seleccione la nueva región para el cajero {opcion}: "))
+        if opcionRegion < 1 or opcionRegion > len(regiones):
+            print("Opción inválida. Intente nuevamente.")
+            return
+        nuevaRegion = regiones[opcionRegion - 1]
+        if nuevaRegion  == cajero.region:
+            print("El cajero ya pertenece a esa región. No se realizaron cambios.")
+        else:
+            cajero.region = nuevaRegion 
+            print(f"Cajero {cajero.idCajero} actualizado con nueva región: {nuevaRegion}.")
+    except ValueError:
+        print("Entrada no válida. Debe ingresar un número.")
 
 def cambiarEstadoCajero():
     print("\n=== Cambiar Estado del Cajero ===")
     
-    print("Cajeros disponibles:")
-    for cajero in cajerosRegistrados:
-        print(f"ID: {cajero.idCajero} | Región: {cajero.region} | Estado: {cajero.estado}")
+    if not mostrarCajeros():
+        return
 
     idCajero = input("\nIngrese el ID del cajero que desea gestionar: ").strip()
     for cajero in cajerosRegistrados:
@@ -438,10 +581,9 @@ def cambiarEstadoCajero():
 
 def consultarCajero():
     print("\n=== Consultar Cajero ===")
-    print("Cajeros disponibles:")
     
-    for cajero in cajerosRegistrados:
-        print(f"ID: {cajero.idCajero} | Región: {cajero.region}")
+    if not mostrarCajeros():
+        return
 
     idCajero = input("\nIngrese el ID del cajero que desea consultar: ").strip()
     for cajero in cajerosRegistrados:
@@ -460,8 +602,25 @@ def listarCajeros():
     if not cajerosRegistrados:
         print("No hay cajeros registrados.")
         return
-    for cajero in cajerosRegistrados:
-        print(f"ID: {cajero.idCajero} | Región: {cajero.region} | Estado: {cajero.estado} | Billetes: {cajero.billetes}")
+    
+    print("Ordenar por: (1) ID o (2) Región")
+    opcion = input("Seleccione el criterio de orden (1 o 2): ")
+    print("")
+    if opcion == "1":
+        campo = "idCajero"
+    elif opcion == "2":
+        campo = "region"
+    else:
+        print("Opción inválida. Mostrando orden por defecto (ID).")
+        campo = "idCajero"
+        
+    cajerosOrdenados = quickSort(cajerosRegistrados, campo)
+    
+    print(f"{'ID'.ljust(10)}{'Región'.ljust(15)}{'Estado'.ljust(20)}{'Billetes'.ljust(10)}")
+    print("-" * 75)
+       
+    for cajero in cajerosOrdenados:
+           print(f"{str(cajero.idCajero).ljust(10)}{cajero.region.ljust(15)}{cajero.estado.ljust(20)}{str(cajero.billetes).ljust(10)}")
         
 def mostrarRegiones():
     print("\n=== Regiones Disponibles ===")
@@ -471,28 +630,6 @@ def mostrarRegiones():
     print("[4]. Cuzco")
     print("[5]. Tacna")
     print("[6]. Piura")
-
-def iniciarSesionAdministrador():
-    print("\n=== Inicio de Sesión Administrador ===")
-    
-    while True:
-        nombreUsuario = input("Ingrese su nombre de usuario: ").strip()
-        if nombreUsuario:
-            break
-        print("El nombre de usuario no puede estar vacío. Inténtelo nuevamente.")
-    
-    while True:
-        contraseña = input("Ingrese su contraseña: ").strip()
-        if contraseña:
-            break
-        print("La contraseña no puede estar vacía. Inténtelo nuevamente.")
-    
-    for admin in administradoresRegistrados:
-        if admin.nombreUsuario == nombreUsuario and admin.contraseña == contraseña:
-            print(f"¡Bienvenido, {admin.nombre}!")
-            gestionarAdministrador()
-            return
-    print("Credenciales incorrectas. Intente nuevamente.")
 
 def iniciarSesionCliente():
     print("\n=== Inicio de Sesión Cliente ===")
@@ -524,7 +661,8 @@ def menuCliente():
         print("\n=== Menú Cliente ===\n")
         print("1. Iniciar sesión")
         print("2. Registrarse")
-        print("3. Volver atrás\n")
+        print("3. Cambiar contraseña")
+        print("4. Volver atrás\n")
         opcion = input("Seleccione una opción: ")
 
         if opcion == "1":
@@ -532,6 +670,8 @@ def menuCliente():
         elif opcion == "2":
             registrarCliente()
         elif opcion == "3":
+            cambiarContraseña(clientesRegistrados)
+        elif opcion == "4":
             return
         else:
             print("Opción inválida. Intente nuevamente.")
@@ -586,19 +726,7 @@ def clienteCajeros(cliente):
             return
         else:
             print("Opción inválida. Intente nuevamente.")
-
-def ordenarQuickSort(lista):
-    if len(lista) <= 1:
-        return lista
-    else:
-        pivote = lista[len(lista) // 2]
-        
-        izquierda = [x for x in lista if x > pivote]
-        centro = [x for x in lista if x == pivote]
-        derecha = [x for x in lista if x < pivote]
-        
-        return ordenarQuickSort(izquierda) + centro + ordenarQuickSort(derecha)
-         
+    
 def desgloseBilletesDinamico(monto, denominaciones, billetesDisponibles):
     denominaciones = sorted(denominaciones, reverse=True)
     desglose = {}
@@ -705,12 +833,14 @@ def retirar(cajero, cliente):
         cliente.cuenta.retirar(monto, cajero.idCajero)
         for billete, cantidad in desglose.items():
             cajero.billetes[billete] -= cantidad
-
+        
+        cliente.cuenta.registrarMovimiento("Retiro", -monto, "Banco")
+        
         print(f"Retiro exitoso. Nuevo saldo: {cliente.cuenta.saldo}")
         print(f"Desglose de billetes entregados: {desglose}")
     except ValueError:
         print("Entrada no válida. Debe ingresar un número entero.")
-
+        
 def transferir(cliente):
     print("\n=== Transferencia ===")
     try:
@@ -729,15 +859,15 @@ def transferir(cliente):
         if monto <= 0:
             print("El monto debe ser mayor a 0.")
             return
-        if monto > cliente.cuenta.saldo:
-            print("Saldo insuficiente en la cuenta.")
-            return
 
-        cliente.cuenta.retirar(monto, "Banco")
-        clienteDestino.cuenta.depositar(monto, "Banco")
+        if cliente.cuenta.retirar(monto, "Banco", registrar=False):
+            clienteDestino.cuenta.depositar(monto, "Banco")
+            cliente.cuenta.registrarMovimiento("Transferencia", -monto, "Banco", f"Transferencia a {clienteDestino.nombreUsuario}")
 
-        print(f"Transferencia exitosa. Nuevo saldo: {cliente.cuenta.saldo}")
-        print(f"{clienteDestino.nombre} ahora tiene un saldo de: {clienteDestino.cuenta.saldo}")
+            print(f"Transferencia exitosa. Nuevo saldo: {cliente.cuenta.saldo}")
+            print(f"{clienteDestino.nombre} ahora tiene un saldo de: {clienteDestino.cuenta.saldo}")
+        else:
+            print("Transferencia fallida.")
     except ValueError:
         print("Entrada no válida. Debe ingresar un número entero.")
 
@@ -766,12 +896,12 @@ def pagarServicios(cliente):
             print("El monto debe ser mayor a 0.")
             return
 
-        if cliente.cuenta.saldo < monto:
-            print(f"Saldo insuficiente para pagar el servicio de {servicio}. Monto: {monto}, Saldo actual: {cliente.cuenta.saldo}")
-            return
+        if cliente.cuenta.retirar(monto, "Banco", registrar=False):
+            cliente.cuenta.registrarMovimiento("Pago de Servicios", -monto, "Banco", f"Pago de {servicio}")
 
-        cliente.cuenta.retirar(monto, "Banco")
-        print(f"Pago exitoso del servicio de {servicio}. Nuevo saldo: {cliente.cuenta.saldo}")
+            print(f"Pago exitoso del servicio de {servicio}. Nuevo saldo: {cliente.cuenta.saldo}")
+        else:
+            print("Pago fallido.")
     except ValueError:
         print("Entrada no válida. Debe ingresar un número entero.")
 
