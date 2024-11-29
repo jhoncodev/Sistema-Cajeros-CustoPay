@@ -1,5 +1,6 @@
 #------------------------------------------------------------------------------#
 # Librerias
+
 from datetime import datetime
 #------------------------------------------------------------------------------#
 # Clases
@@ -62,12 +63,13 @@ class Cajero:
             
 #------------------------------------------------------------------------------#
 # Listas
+
 clientesRegistrados = []
 administradoresRegistrados = []
 cajerosRegistrados = []
-#------------------------------------------------------------------------------#
 
-# Menús y sub menús
+#------------------------------------------------------------------------------#
+# Menú principal
 
 def menuPrincipal():
     
@@ -88,6 +90,9 @@ def menuPrincipal():
         else:
             print("Opción inválida. Intente nuevamente.")
 
+#------------------------------------------------------------------------------#
+# Acceso administrador
+
 def menuAdministrador():
     while True:
         print("\n=== Menú Administrador ===\n")
@@ -107,38 +112,39 @@ def menuAdministrador():
             return
         else:
             print("Opción inválida. Intente nuevamente.")
-            
-def cambiarContraseña(listaUsuarios):
-    print("\n=== Cambiar Contraseña ===")
 
+def registrarAdministrador():
+    print("\n=== Registro de Administrador ===")
+    
+    while True:
+        nombre = input("Ingrese su nombre: ").strip()
+        if nombre:
+            break
+        print("El nombre no puede estar vacío. Inténtelo nuevamente.")
+    
     while True:
         nombreUsuario = input("Ingrese su nombre de usuario: ").strip()
-        if nombreUsuario:
+        if not nombreUsuario:
+            print("El nombre de usuario no puede estar vacío. Inténtelo nuevamente.")
+        elif usuarioRegistrado(nombreUsuario):
+            print("Nombre de usuario ya registrado en una cuenta. Ingrese otro nombre de usuario.")
+        else:
             break
-        print("El nombre de usuario no puede estar vacío. Inténtelo nuevamente.")
-
+    
     while True:
-        contraseñaActual = input("Ingrese su contraseña actual: ").strip()
-        if contraseñaActual:
+        contraseña = input("Ingrese su contraseña: ").strip()
+        if contraseña:
             break
         print("La contraseña no puede estar vacía. Inténtelo nuevamente.")
-
-    for usuario in listaUsuarios:
-        if usuario.nombreUsuario == nombreUsuario and usuario.contraseña == contraseñaActual:
-            while True:
-                nuevaContraseña = input("Ingrese la nueva contraseña: ").strip()
-                confirmarContraseña = input("Confirme la nueva contraseña: ").strip()
-
-                if not nuevaContraseña:
-                    print("La nueva contraseña no puede estar vacía. Inténtelo nuevamente.")
-                elif nuevaContraseña != confirmarContraseña:
-                    print("Las contraseñas no coinciden. Inténtelo nuevamente.")
-                else:
-                    usuario.contraseña = nuevaContraseña
-                    print("Contraseña actualizada con éxito.")
-                    return
-    print("Credenciales incorrectas. Intente nuevamente.")
-
+    
+    try:
+        idUsuario = len(administradoresRegistrados) + 1
+        nuevoAdmin = Administrador(idUsuario, nombre, nombreUsuario, contraseña)
+        administradoresRegistrados.append(nuevoAdmin)
+        print(f"Administrador '{nombre}' registrado con éxito.")
+    except Exception as e:
+        print(f"Error al registrar el administrador: {e}")
+        
 def iniciarSesionAdministrador():
     print("\n=== Inicio de Sesión Administrador ===")
     
@@ -205,23 +211,9 @@ def gestionarClientes():
         else:
             print("Opción inválida. Intente nuevamente.")
 
-def busquedaBinaria(lista, campo, valor):
-    valor = valor.lower()
-    izquierda = 0
-    derecha = len(lista) - 1
+#------------------------------------------------------------------------------#
+# Operaciones gestión clientes del administrador
 
-    while izquierda <= derecha:
-        medio = (izquierda + derecha) // 2
-        atributo = getattr(lista[medio], campo).lower()
-        if atributo == valor:
-            return medio
-        elif atributo < valor:
-            izquierda = medio + 1
-        else:
-            derecha = medio - 1
-
-    return -1 
- 
 def mostrarClientes():
     if not clientesRegistrados:
         print("No hay clientes registrados.")
@@ -312,15 +304,6 @@ def consultarCliente():
     else:
         print(f"Cliente con nombre de usuario '{nombreUsuario}' no encontrado.")
 
-def quickSort(listaDesordenada, campo):
-    if len(listaDesordenada) <= 1:
-        return listaDesordenada
-    pivote = listaDesordenada[len(listaDesordenada) // 2] 
-    izquierda = [cliente for cliente in listaDesordenada if getattr(cliente, campo) < getattr(pivote, campo)]
-    medio = [cliente for cliente in listaDesordenada if getattr(cliente, campo) == getattr(pivote, campo)]
-    derecha = [cliente for cliente in listaDesordenada if getattr(cliente, campo) > getattr(pivote, campo)]
-    return quickSort(izquierda, campo) + medio + quickSort(derecha, campo)
-
 def listarClientes():
     print("\n=== Listar Clientes ===")
     if not clientesRegistrados:
@@ -346,81 +329,8 @@ def listarClientes():
     for cliente in clientesOrdenados:
         print(f"{str(cliente.idUsuario).ljust(10)}{cliente.nombre.ljust(20)}{cliente.nombreUsuario.ljust(20)}{cliente.estado.ljust(10)}")
 
-def registrarCliente():
-    print("\n=== Registro de Cliente ===")
-    
-    while True:
-        nombre = input("Ingresar el nombre: ").strip()
-        if nombre:
-            break
-        print("El nombre no puede estar vacío. Inténtelo nuevamente.")
-    
-    while True:
-        nombreUsuario = input("Ingrese el nombre de usuario: ").strip()
-        if not nombreUsuario:
-            print("El nombre de usuario no puede estar vacío. Inténtelo nuevamente.")
-        elif usuarioRegistrado(nombreUsuario):
-            print("Nombre de usuario ya registrado en una cuenta. Ingrese otro nombre de usuario.")
-        else:
-            break
-    
-    while True:
-        contraseña = input("Ingrese la contraseña: ").strip()
-        if contraseña:
-            break
-        print("La contraseña no puede estar vacía. Inténtelo nuevamente.")
-    
-    try:
-        idUsuario = len(clientesRegistrados) + 1
-        saldoInicial = 0
-        nuevaCuenta = Cuenta(f"CU{idUsuario}", saldoInicial)
-        nuevoCliente = Cliente(idUsuario, nombre, nombreUsuario, contraseña, nuevaCuenta)
-        clientesRegistrados.append(nuevoCliente)
-        print(f"Cliente '{nombreUsuario}' registrado con éxito.")
-    except Exception as e:
-        print(f"Error al registrar el cliente: {e}")
-
-def registrarAdministrador():
-    print("\n=== Registro de Administrador ===")
-    
-    while True:
-        nombre = input("Ingrese su nombre: ").strip()
-        if nombre:
-            break
-        print("El nombre no puede estar vacío. Inténtelo nuevamente.")
-    
-    while True:
-        nombreUsuario = input("Ingrese su nombre de usuario: ").strip()
-        if not nombreUsuario:
-            print("El nombre de usuario no puede estar vacío. Inténtelo nuevamente.")
-        elif usuarioRegistrado(nombreUsuario):
-            print("Nombre de usuario ya registrado en una cuenta. Ingrese otro nombre de usuario.")
-        else:
-            break
-    
-    while True:
-        contraseña = input("Ingrese su contraseña: ").strip()
-        if contraseña:
-            break
-        print("La contraseña no puede estar vacía. Inténtelo nuevamente.")
-    
-    try:
-        idUsuario = len(administradoresRegistrados) + 1
-        nuevoAdmin = Administrador(idUsuario, nombre, nombreUsuario, contraseña)
-        administradoresRegistrados.append(nuevoAdmin)
-        print(f"Administrador '{nombre}' registrado con éxito.")
-    except Exception as e:
-        print(f"Error al registrar el administrador: {e}")
-
-def usuarioRegistrado(nombreUsuario):
-    for cliente in clientesRegistrados:
-        if cliente.nombreUsuario == nombreUsuario:
-            return True
-        
-    for administrador in administradoresRegistrados:
-        if administrador.nombreUsuario == nombreUsuario:
-            return True
-    return False
+#------------------------------------------------------------------------------#
+# Operaciones gestión cajeros del administrador
 
 def gestionarCajeros():
     while True:
@@ -447,6 +357,15 @@ def gestionarCajeros():
             return
         else:
             print("Opción inválida. Intente nuevamente.")
+
+def mostrarRegiones():
+    print("\n=== Regiones Disponibles ===")
+    print("[1]. Cajamarca")
+    print("[2]. Lima")
+    print("[3]. Loreto")
+    print("[4]. Cuzco")
+    print("[5]. Tacna")
+    print("[6]. Piura")
 
 def agregarCajero():
     print("\n=== Agregar Cajero ===")
@@ -591,15 +510,43 @@ def listarCajeros():
        
     for cajero in cajerosOrdenados:
            print(f"{str(cajero.idCajero).ljust(10)}{cajero.region.ljust(15)}{cajero.estado.ljust(20)}{str(cajero.billetes).ljust(10)}")
-        
-def mostrarRegiones():
-    print("\n=== Regiones Disponibles ===")
-    print("[1]. Cajamarca")
-    print("[2]. Lima")
-    print("[3]. Loreto")
-    print("[4]. Cuzco")
-    print("[5]. Tacna")
-    print("[6]. Piura")
+      
+#------------------------------------------------------------------------------#
+# Acceso cliente
+
+def registrarCliente():
+    print("\n=== Registro de Cliente ===")
+    
+    while True:
+        nombre = input("Ingresar el nombre: ").strip()
+        if nombre:
+            break
+        print("El nombre no puede estar vacío. Inténtelo nuevamente.")
+    
+    while True:
+        nombreUsuario = input("Ingrese el nombre de usuario: ").strip()
+        if not nombreUsuario:
+            print("El nombre de usuario no puede estar vacío. Inténtelo nuevamente.")
+        elif usuarioRegistrado(nombreUsuario):
+            print("Nombre de usuario ya registrado en una cuenta. Ingrese otro nombre de usuario.")
+        else:
+            break
+    
+    while True:
+        contraseña = input("Ingrese la contraseña: ").strip()
+        if contraseña:
+            break
+        print("La contraseña no puede estar vacía. Inténtelo nuevamente.")
+    
+    try:
+        idUsuario = len(clientesRegistrados) + 1
+        saldoInicial = 0
+        nuevaCuenta = Cuenta(f"CU{idUsuario}", saldoInicial)
+        nuevoCliente = Cliente(idUsuario, nombre, nombreUsuario, contraseña, nuevaCuenta)
+        clientesRegistrados.append(nuevoCliente)
+        print(f"Cliente '{nombreUsuario}' registrado con éxito.")
+    except Exception as e:
+        print(f"Error al registrar el cliente: {e}")
 
 def iniciarSesionCliente():
     print("\n=== Inicio de Sesión Cliente ===")
@@ -642,6 +589,45 @@ def menuCliente():
         elif opcion == "3":
             cambiarContraseña(clientesRegistrados)
         elif opcion == "4":
+            return
+        else:
+            print("Opción inválida. Intente nuevamente.")
+
+#------------------------------------------------------------------------------#
+# Operaciones del cliente
+
+def operacionesCliente(cajero, cliente):
+    
+    while True:
+        print(f"\n=== Operaciones en Cajero ID {cajero.idCajero} - Región: {cajero.region} ===")
+        print("[1]. Depositar")
+        print("[2]. Retirar")
+        print("[3]. Transferir")
+        print("[4]. Pagar Servicios")
+        print("[5]. Consultar Saldo")
+        print("[6]. Consultar Movimientos")
+        print("[7]. Volver atrás")
+        opcion = input("Seleccione una operación: ")
+
+        if opcion == "1":
+            print()
+            depositar(cajero, cliente)
+        elif opcion == "2":
+            print()
+            retirar(cajero, cliente)
+        elif opcion == "3":
+            print()
+            transferir(cliente)
+        elif opcion == "4":
+            print()
+            pagarServicios(cliente)
+        elif opcion == "5":
+            print()
+            consultarSaldo(cliente)
+        elif opcion == "6":
+            print()
+            consultarMovimientos(cliente)
+        elif opcion == "7":
             return
         else:
             print("Opción inválida. Intente nuevamente.")
@@ -697,67 +683,6 @@ def clienteCajeros(cliente):
         else:
             print("Opción inválida. Intente nuevamente.")
     
-def desgloseBilletesDinamico(monto, denominaciones, billetesDisponibles):
-    denominaciones = sorted(denominaciones, reverse=True)
-    desglose = {}
-    montoActual = monto
-    copiaBilletes = billetesDisponibles.copy()
-
-    for denominacion in denominaciones:
-        cantidadNecesaria = montoActual // denominacion
-        cantidadDisponible = copiaBilletes[denominacion]
-        cantidadAUsar = min(cantidadNecesaria, cantidadDisponible)
-
-        if cantidadAUsar > 0:
-            desglose[denominacion] = cantidadAUsar
-            montoActual -= cantidadAUsar * denominacion
-
-    if montoActual != 0:
-        return None
-    return desglose
-
-def operacionesCliente(cajero, cliente):
-    
-    while True:
-        print(f"\n=== Operaciones en Cajero ID {cajero.idCajero} - Región: {cajero.region} ===")
-        print("[1]. Depositar")
-        print("[2]. Retirar")
-        print("[3]. Transferir")
-        print("[4]. Pagar Servicios")
-        print("[5]. Consultar Saldo")
-        print("[6]. Consultar Movimientos")
-        print("[7]. Volver atrás")
-        opcion = input("Seleccione una operación: ")
-
-        if opcion == "1":
-            print()
-            depositar(cajero, cliente)
-        elif opcion == "2":
-            print()
-            retirar(cajero, cliente)
-        elif opcion == "3":
-            print()
-            transferir(cliente)
-        elif opcion == "4":
-            print()
-            pagarServicios(cliente)
-        elif opcion == "5":
-            print()
-            consultarSaldo(cliente)
-        elif opcion == "6":
-            print()
-            consultarMovimientos(cliente)
-        elif opcion == "7":
-            return
-        else:
-            print("Opción inválida. Intente nuevamente.")
-
-def mostrarDesglose(desglose):
-    print(f"{'Billete'.ljust(10)}{'Cantidad'.rjust(10)}")
-    print("-" * 20)
-    for billete, cantidad in sorted(desglose.items(), reverse=True):
-        print(f"{str(billete).ljust(5)}{str(cantidad).rjust(10)}")
-
 def depositar(cajero, cliente):
     print("=== Depósito ===")
     try:
@@ -789,6 +714,12 @@ def depositar(cajero, cliente):
         
     except ValueError:
         print("\033[1;31mEntrada no válida, ingresar un número entero.\033[0m")
+
+def mostrarDesglose(desglose):
+    print(f"{'Billete'.ljust(10)}{'Cantidad'.rjust(10)}")
+    print("-" * 20)
+    for billete, cantidad in sorted(desglose.items(), reverse=True):
+        print(f"{str(billete).ljust(5)}{str(cantidad).rjust(10)}")
 
 def retirar(cajero, cliente):
     print("=== Retiro ===")
@@ -911,8 +842,98 @@ def consultarMovimientos(cliente):
             monto = f"\033[1;34m{monto}\033[0m"
 
         print(f"{fecha.ljust(20)} {hora.ljust(20)} {tipo.ljust(20)} {monto.rjust(15)}")
+        
+#------------------------------------------------------------------------------#
+# Métodos compartidos por cliente y administrador
+   
+def cambiarContraseña(listaUsuarios):
+    print("\n=== Cambiar Contraseña ===")
 
+    while True:
+        nombreUsuario = input("Ingrese su nombre de usuario: ").strip()
+        if nombreUsuario:
+            break
+        print("El nombre de usuario no puede estar vacío. Inténtelo nuevamente.")
 
+    while True:
+        contraseñaActual = input("Ingrese su contraseña actual: ").strip()
+        if contraseñaActual:
+            break
+        print("La contraseña no puede estar vacía. Inténtelo nuevamente.")
+
+    for usuario in listaUsuarios:
+        if usuario.nombreUsuario == nombreUsuario and usuario.contraseña == contraseñaActual:
+            while True:
+                nuevaContraseña = input("Ingrese la nueva contraseña: ").strip()
+                confirmarContraseña = input("Confirme la nueva contraseña: ").strip()
+
+                if not nuevaContraseña:
+                    print("La nueva contraseña no puede estar vacía. Inténtelo nuevamente.")
+                elif nuevaContraseña != confirmarContraseña:
+                    print("Las contraseñas no coinciden. Inténtelo nuevamente.")
+                else:
+                    usuario.contraseña = nuevaContraseña
+                    print("Contraseña actualizada con éxito.")
+                    return
+    print("Credenciales incorrectas. Intente nuevamente.")
+
+def usuarioRegistrado(nombreUsuario):
+    for cliente in clientesRegistrados:
+        if cliente.nombreUsuario == nombreUsuario:
+            return True
+        
+    for administrador in administradoresRegistrados:
+        if administrador.nombreUsuario == nombreUsuario:
+            return True
+    return False
+
+#------------------------------------------------------------------------------#
+# Algoritmos técnicos
+
+def busquedaBinaria(lista, campo, valor):
+    valor = valor.lower()
+    izquierda = 0
+    derecha = len(lista) - 1
+
+    while izquierda <= derecha:
+        medio = (izquierda + derecha) // 2
+        atributo = getattr(lista[medio], campo).lower()
+        if atributo == valor:
+            return medio
+        elif atributo < valor:
+            izquierda = medio + 1
+        else:
+            derecha = medio - 1
+
+    return -1 
+ 
+def quickSort(listaDesordenada, campo):
+    if len(listaDesordenada) <= 1:
+        return listaDesordenada
+    pivote = listaDesordenada[len(listaDesordenada) // 2] 
+    izquierda = [cliente for cliente in listaDesordenada if getattr(cliente, campo) < getattr(pivote, campo)]
+    medio = [cliente for cliente in listaDesordenada if getattr(cliente, campo) == getattr(pivote, campo)]
+    derecha = [cliente for cliente in listaDesordenada if getattr(cliente, campo) > getattr(pivote, campo)]
+    return quickSort(izquierda, campo) + medio + quickSort(derecha, campo)
+
+def desgloseBilletesDinamico(monto, denominaciones, billetesDisponibles):
+    denominaciones = sorted(denominaciones, reverse=True)
+    desglose = {}
+    montoActual = monto
+    copiaBilletes = billetesDisponibles.copy()
+
+    for denominacion in denominaciones:
+        cantidadNecesaria = montoActual // denominacion
+        cantidadDisponible = copiaBilletes[denominacion]
+        cantidadAUsar = min(cantidadNecesaria, cantidadDisponible)
+
+        if cantidadAUsar > 0:
+            desglose[denominacion] = cantidadAUsar
+            montoActual -= cantidadAUsar * denominacion
+
+    if montoActual != 0:
+        return None
+    return desglose
 
 #------------------------------------------------------------------------------#
 #Ejecución
