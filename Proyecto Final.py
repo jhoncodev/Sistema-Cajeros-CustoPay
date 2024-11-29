@@ -15,20 +15,11 @@ class Usuario:
 class Administrador(Usuario):
     def __init__(self, idUsuario, nombre, nombreUsuario, contraseña):
         super().__init__(idUsuario, nombre, nombreUsuario, contraseña)
-    
-    def gestionarClientes(self):
-        print("Función para gestionar clientes...")
-
-    def gestionarCajeros(self):
-        print("Función para gestionar cajeros...")
 
 class Cliente(Usuario):
     def __init__(self, idUsuario, nombre, nombreUsuario, contraseña, cuenta):
         super().__init__(idUsuario, nombre, nombreUsuario, contraseña)
         self.cuenta = cuenta
-
-    def realizarOperacion(self, tipo, monto):
-        print(f"Realizando operación: {tipo} por un monto de {monto}...")
 
 class Cuenta:
     def __init__(self, idCuenta, saldo=0):
@@ -36,36 +27,32 @@ class Cuenta:
         self.saldo = saldo
         self.movimientos = []
 
-    def depositar(self, monto, cajero_id):
+    def depositar(self, monto, tipo):
         self.saldo += monto
-        self.registrarMovimiento("Depósito", monto, cajero_id)
+        self.registrarMovimiento(monto, tipo)
 
-    def retirar(self, monto, cajero_id, registrar=True):
+    def retirar(self, monto, tipo, registrar=True):
         if monto > self.saldo:
-            print("Saldo insuficiente.")
+            print("\033[1;31mRetiro fallido, saldo insuficiente\033[0m")
             return False
         self.saldo -= monto
+        if registrar:    
+            self.registrarMovimiento(-monto, tipo)
         return True
 
-
-    def registrarMovimiento(self, tipo, monto, cajero_id, detalle=None):
-        movimiento = Movimiento(tipo, monto, cajero_id, detalle)
+    def registrarMovimiento(self, monto, tipo, detalle=None):
+        movimiento = Movimiento(monto, tipo, detalle)
         self.movimientos.append(movimiento)
 
 class Movimiento:
-    def __init__(self, tipo, monto, cajero=None, detalle=None):
-        self.tipo = tipo
+    def __init__(self, monto, tipo, detalle=None):
         self.monto = monto
-        self.cajero = cajero
+        self.tipo = tipo
         self.detalle = detalle or "Sin detalles"
         self.fecha = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     def __str__(self):
-        detalles = f"{self.fecha} - {self.tipo}: {self.monto}"
-        if self.cajero:
-            detalles += f" (Cajero: {self.cajero})"
-        detalles += f" - {self.detalle}"
-        return detalles
+        return f"{self.fecha} - {self.tipo}: {self.monto} (Cajero: {self.cajero}) {self.detalle}"
 
 class Cajero:
     def __init__(self, idCajero, region):
@@ -86,10 +73,7 @@ class Cajero:
             print(f"Cajero {self.idCajero} en región '{self.region}' actualizado a estado: {self.estado}.")
         else:
             print("Estado no válido. Use 'Activo' o 'Mantenimiento'.")
-
-    def __str__(self):
-        return f"Cajero ID: {self.idCajero} | Región: {self.region} | Estado: {self.estado}"
-
+            
 #------------------------------------------------------------------------------#
 # Listas
 clientesRegistrados = []
@@ -617,7 +601,7 @@ def listarCajeros():
     cajerosOrdenados = quickSort(cajerosRegistrados, campo)
     
     print(f"{'ID'.ljust(10)}{'Región'.ljust(15)}{'Estado'.ljust(20)}{'Billetes'.ljust(10)}")
-    print("-" * 75)
+    print("-" * 80)
        
     for cajero in cajerosOrdenados:
            print(f"{str(cajero.idCajero).ljust(10)}{cajero.region.ljust(15)}{cajero.estado.ljust(20)}{str(cajero.billetes).ljust(10)}")
@@ -747,8 +731,9 @@ def desgloseBilletesDinamico(monto, denominaciones, billetesDisponibles):
     return desglose
 
 def operacionesCliente(cajero, cliente):
-    print(f"\n=== Operaciones en Cajero ID {cajero.idCajero} - Región: {cajero.region} ===")
+    
     while True:
+        print(f"\n=== Operaciones en Cajero ID {cajero.idCajero} - Región: {cajero.region} ===")
         print("1. Depositar")
         print("2. Retirar")
         print("3. Transferir")
@@ -780,10 +765,15 @@ def operacionesCliente(cajero, cliente):
             return
         else:
             print("Opción inválida. Intente nuevamente.")
-        print()
-   
+
+def mostrarDesglose(desglose):
+    print(f"{'Billete'.ljust(10)}{'Cantidad'.rjust(10)}")
+    print("-" * 20)
+    for billete, cantidad in sorted(desglose.items(), reverse=True):
+        print(f"{str(billete).ljust(5)}{str(cantidad).rjust(10)}")
+
 def depositar(cajero, cliente):
-    print("\n=== Depósito ===")
+    print("=== Depósito ===")
     try:
         monto = int(input("Ingrese el monto a depositar: "))
         if monto <= 0:
@@ -802,20 +792,20 @@ def depositar(cajero, cliente):
 
         montoDesglose = sum(denominacion * cantidad for denominacion, cantidad in desglose.items())
         if montoDesglose != monto:
-            print(f"El monto total del desglose ({montoDesglose}) no coincide con el monto ingresado ({monto}).")
+            print("\033[1;31mDepósito fallido, el monto total del desglose no coincide con el monto ingresado.\033[0m")
             return
 
-        cliente.cuenta.depositar(monto, cajero.idCajero)
+        cliente.cuenta.depositar(monto, "Depósito")
         for billete, cantidad in desglose.items():
             cajero.billetes[billete] += cantidad
 
-        print(f"Depósito exitoso. Nuevo saldo: {cliente.cuenta.saldo}")
-        print(f"Desglose de billetes depositados: {desglose}")
+        print("\033[1;34mDepósito exitoso.\033[0m")
+        
     except ValueError:
         print("Entrada no válida. Debe ingresar un número entero.")
 
 def retirar(cajero, cliente):
-    print("\n=== Retiro ===")
+    print("=== Retiro ===")
     try:
         monto = int(input("Ingrese el monto a retirar: "))
         if monto <= 0:
@@ -830,22 +820,28 @@ def retirar(cajero, cliente):
             print("El cajero no tiene suficientes billetes para completar esta transacción.")
             return
 
-        cliente.cuenta.retirar(monto, cajero.idCajero)
         for billete, cantidad in desglose.items():
-            cajero.billetes[billete] -= cantidad
-        
-        cliente.cuenta.registrarMovimiento("Retiro", -monto, "Banco")
-        
-        print(f"Retiro exitoso. Nuevo saldo: {cliente.cuenta.saldo}")
-        print(f"Desglose de billetes entregados: {desglose}")
+            if cajero.billetes[billete] < cantidad:
+                print(f"No hay suficientes billetes de {billete}.")
+                return
+
+        if cliente.cuenta.retirar(monto, "Retiro"):
+            for billete, cantidad in desglose.items():
+                cajero.billetes[billete] -= cantidad
+
+            print("\033[1;34mRetiro exitoso.\033[0m")
+            print("Desglose de billetes retirados:")
+            mostrarDesglose(desglose)
+        else:
+            print("\033[1;31mRetiro fallido.\033[0m")
     except ValueError:
         print("Entrada no válida. Debe ingresar un número entero.")
-        
+
 def transferir(cliente):
-    print("\n=== Transferencia ===")
+    print("=== Transferencia ===")
     try:
         nombreDestino = input("Ingrese el nombre de usuario del destinatario: ").strip()
-        clienteDestino = next((c for c in clientesRegistrados if c.nombreUsuario == nombreDestino), None)
+        clienteDestino = next((c for c in clientesRegistrados if c.nombreUsuario.lower() == nombreDestino.lower()), None)
 
         if not clienteDestino:
             print("El usuario ingresado no existe.")
@@ -860,19 +856,18 @@ def transferir(cliente):
             print("El monto debe ser mayor a 0.")
             return
 
-        if cliente.cuenta.retirar(monto, "Banco", registrar=False):
-            clienteDestino.cuenta.depositar(monto, "Banco")
-            cliente.cuenta.registrarMovimiento("Transferencia", -monto, "Banco", f"Transferencia a {clienteDestino.nombreUsuario}")
+        if cliente.cuenta.retirar(monto, "Transferencia", registrar=False):
+            clienteDestino.cuenta.depositar(monto, "Transferencia")
+            cliente.cuenta.registrarMovimiento(-monto, "Transferencia")
 
-            print(f"Transferencia exitosa. Nuevo saldo: {cliente.cuenta.saldo}")
-            print(f"{clienteDestino.nombre} ahora tiene un saldo de: {clienteDestino.cuenta.saldo}")
+            print("\033[1;34mTransferencia exitosa.\033[0m")
         else:
-            print("Transferencia fallida.")
+            print("\033[1;31mTransferencia fallida.\033[0m")
     except ValueError:
         print("Entrada no válida. Debe ingresar un número entero.")
 
 def pagarServicios(cliente):
-    print("\n=== Pago de Servicios ===")
+    print("=== Pago de Servicios ===")
     servicios = {
         "1": "Agua",
         "2": "Luz",
@@ -896,27 +891,28 @@ def pagarServicios(cliente):
             print("El monto debe ser mayor a 0.")
             return
 
-        if cliente.cuenta.retirar(monto, "Banco", registrar=False):
-            cliente.cuenta.registrarMovimiento("Pago de Servicios", -monto, "Banco", f"Pago de {servicio}")
-
-            print(f"Pago exitoso del servicio de {servicio}. Nuevo saldo: {cliente.cuenta.saldo}")
+        if cliente.cuenta.retirar(monto, "Pago de Servicios", registrar=False):
+            cliente.cuenta.registrarMovimiento(-monto, "Pago de Servicios")
+            
+            print(f"\033[1;34mPago exitoso del servicio de {servicio}.\033[0m")
+            
         else:
-            print("Pago fallido.")
+            print("\033[1;31mPago fallido. Saldo insuficiente.\033[0m")
     except ValueError:
         print("Entrada no válida. Debe ingresar un número entero.")
 
 def consultarSaldo(cliente):
-    print("\n=== Consulta de Saldo ===")
+    print("=== Consulta de Saldo ===")
     print(f"Saldo actual: {cliente.cuenta.saldo}")
 
 def consultarMovimientos(cliente):
-    print("\n=== Consulta de Movimientos ===")
+    print("=== Consulta de Movimientos ===")
     if not cliente.cuenta.movimientos:
         print("No hay movimientos registrados.")
         return
 
-    print(f"{'Fecha'.ljust(20)} {'Hora'.ljust(10)} {'Tipo'.ljust(20)} {'Monto'.rjust(10)}")
-    print("-" * 65)
+    print(f"{'Fecha'.ljust(20)} {'Hora'.ljust(20)} {'Tipo'.ljust(10)} {'Monto'.rjust(15)}")
+    print("-" * 80)
 
     for movimiento in cliente.cuenta.movimientos:
         fecha, hora = movimiento.fecha.split(" ")
@@ -928,7 +924,8 @@ def consultarMovimientos(cliente):
         else:
             monto = f"\033[1;34m{monto}\033[0m"
 
-        print(f"{fecha.ljust(20)} {hora.ljust(10)} {tipo.ljust(20)} {monto.rjust(10)}")
+        print(f"{fecha.ljust(20)} {hora.ljust(20)} {tipo.ljust(20)} {monto.rjust(15)}")
+
 
 #------------------------------------------------------------------------------#
 
