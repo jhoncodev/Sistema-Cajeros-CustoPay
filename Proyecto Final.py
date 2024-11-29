@@ -33,7 +33,6 @@ class Cuenta:
 
     def retirar(self, monto, tipo, registrar=True):
         if monto > self.saldo:
-            print("\033[1;31mRetiro fallido, saldo insuficiente\033[0m")
             return False
         self.saldo -= monto
         if registrar:    
@@ -60,19 +59,6 @@ class Cajero:
         self.region = region
         self.billetes = {200: 0, 100: 0, 50: 0, 20: 0}
         self.estado = "Activo"
-
-    def agregarBilletes(self, denominacion, cantidad):
-        if denominacion in self.billetes:
-            self.billetes[denominacion] += cantidad
-        else:
-            print(f"Denominación {denominacion} no válida.")
-
-    def cambiarEstado(self, nuevo_estado):
-        if nuevo_estado in ["Activo", "Mantenimiento"]:
-            self.estado = nuevo_estado
-            print(f"Cajero {self.idCajero} en región '{self.region}' actualizado a estado: {self.estado}.")
-        else:
-            print("Estado no válido. Use 'Activo' o 'Mantenimiento'.")
             
 #------------------------------------------------------------------------------#
 # Listas
@@ -105,10 +91,10 @@ def menuPrincipal():
 def menuAdministrador():
     while True:
         print("\n=== Menú Administrador ===\n")
-        print("1. Iniciar sesión")
-        print("2. Registrarse")
-        print("3. Cambiar contraseña")
-        print("4. Volver atrás\n")
+        print("[1]. Iniciar sesión")
+        print("[2]. Registrarse")
+        print("[3]. Cambiar contraseña")
+        print("[4]. Volver atrás\n")
         opcion = input("Seleccione una opción: ")
 
         if opcion == "1":
@@ -178,9 +164,9 @@ def iniciarSesionAdministrador():
 def gestionarAdministrador():
     while True:
         print("\n=== Opciones de Administrador ===")
-        print("1. Gestionar Clientes")
-        print("2. Gestionar Cajeros")
-        print("3. Regresar")
+        print("[1]. Gestionar Clientes")
+        print("[2]. Gestionar Cajeros")
+        print("[3]. Regresar")
         opcion = input("Seleccione una opción: ")
 
         if opcion == "1":
@@ -643,10 +629,10 @@ def iniciarSesionCliente():
 def menuCliente():
     while True:
         print("\n=== Menú Cliente ===\n")
-        print("1. Iniciar sesión")
-        print("2. Registrarse")
-        print("3. Cambiar contraseña")
-        print("4. Volver atrás\n")
+        print("[1]. Iniciar sesión")
+        print("[2]. Registrarse")
+        print("[3]. Cambiar contraseña")
+        print("[4]. Volver atrás\n")
         opcion = input("Seleccione una opción: ")
 
         if opcion == "1":
@@ -734,13 +720,13 @@ def operacionesCliente(cajero, cliente):
     
     while True:
         print(f"\n=== Operaciones en Cajero ID {cajero.idCajero} - Región: {cajero.region} ===")
-        print("1. Depositar")
-        print("2. Retirar")
-        print("3. Transferir")
-        print("4. Pagar Servicios")
-        print("5. Consultar Saldo")
-        print("6. Consultar Movimientos")
-        print("7. Volver atrás")
+        print("[1]. Depositar")
+        print("[2]. Retirar")
+        print("[3]. Transferir")
+        print("[4]. Pagar Servicios")
+        print("[5]. Consultar Saldo")
+        print("[6]. Consultar Movimientos")
+        print("[7]. Volver atrás")
         opcion = input("Seleccione una operación: ")
 
         if opcion == "1":
@@ -777,7 +763,7 @@ def depositar(cajero, cliente):
     try:
         monto = int(input("Ingrese el monto a depositar: "))
         if monto <= 0:
-            print("El monto debe ser mayor a 0.")
+            print("\033[1;31mDepósito fallido, el monto debe ser mayor a 0\033[0m")
             return
 
         print("Ingrese el desglose de billetes:")
@@ -786,7 +772,7 @@ def depositar(cajero, cliente):
         for denominacion in sorted(cajero.billetes.keys(), reverse=True):
             cantidad = int(input(f"Cantidad de billetes de {denominacion}: "))
             if cantidad < 0:
-                print("La cantidad de billetes no puede ser negativa.")
+                print("\033[1;31mDepósito fallido, la cantidad de billetes no puede ser negativa.\033[0m")
                 return
             desglose[denominacion] = cantidad
 
@@ -802,27 +788,27 @@ def depositar(cajero, cliente):
         print("\033[1;34mDepósito exitoso.\033[0m")
         
     except ValueError:
-        print("Entrada no válida. Debe ingresar un número entero.")
+        print("\033[1;31mEntrada no válida, ingresar un número entero.\033[0m")
 
 def retirar(cajero, cliente):
     print("=== Retiro ===")
     try:
         monto = int(input("Ingrese el monto a retirar: "))
         if monto <= 0:
-            print("El monto debe ser mayor a 0.")
+            print("\033[1;31mRetiro fallido, el monto debe ser mayor a 0\033[0m")
             return
         if monto > cliente.cuenta.saldo:
-            print("Saldo insuficiente en la cuenta.")
+            print("\033[1;31mRetiro fallido, saldo insuficiente en la cuenta\033[0m")
             return
 
         desglose = desgloseBilletesDinamico(monto, list(cajero.billetes.keys()), cajero.billetes.copy())
         if not desglose:
-            print("El cajero no tiene suficientes billetes para completar esta transacción.")
+            print("\033[1;31mRetiro fallido, el cajero no tiene suficientes billetes\033[0m")
             return
 
         for billete, cantidad in desglose.items():
             if cajero.billetes[billete] < cantidad:
-                print(f"No hay suficientes billetes de {billete}.")
+                print(f"\033[1;31mRetiro fallido, no hay suficientes billetes de {billete}.\033[0m")
                 return
 
         if cliente.cuenta.retirar(monto, "Retiro"):
@@ -833,9 +819,9 @@ def retirar(cajero, cliente):
             print("Desglose de billetes retirados:")
             mostrarDesglose(desglose)
         else:
-            print("\033[1;31mRetiro fallido.\033[0m")
+            print("\033[1;31mRetiro fallido, saldo insuficiente.\033[0m")
     except ValueError:
-        print("Entrada no válida. Debe ingresar un número entero.")
+        print("\033[1;31mEntrada no válida, ingresar un número entero.\033[0m")
 
 def transferir(cliente):
     print("=== Transferencia ===")
@@ -844,16 +830,16 @@ def transferir(cliente):
         clienteDestino = next((c for c in clientesRegistrados if c.nombreUsuario.lower() == nombreDestino.lower()), None)
 
         if not clienteDestino:
-            print("El usuario ingresado no existe.")
+            print("\033[1;31mTransferencia fallida, el usuario ingresado no existe.\033[0m")
             return
 
         if clienteDestino.idUsuario == cliente.idUsuario:
-            print("No puedes transferir dinero a tu propia cuenta.")
+            print("\033[1;31mTransferencia fallida, no puedes transferir dinero a tu propia cuenta.\033[0m")
             return
 
         monto = int(input("Ingrese el monto a transferir: "))
         if monto <= 0:
-            print("El monto debe ser mayor a 0.")
+            print("\033[1;31mTransferencia fallida, el monto debe ser mayor a 0.\033[0m")
             return
 
         if cliente.cuenta.retirar(monto, "Transferencia", registrar=False):
@@ -862,9 +848,9 @@ def transferir(cliente):
 
             print("\033[1;34mTransferencia exitosa.\033[0m")
         else:
-            print("\033[1;31mTransferencia fallida.\033[0m")
+            print("\033[1;31mTransferencia fallida, saldo insuficiente en la cuenta.\033[0m")
     except ValueError:
-        print("Entrada no válida. Debe ingresar un número entero.")
+        print("\033[1;31mEntrada no válida, ingresar un número entero.\033[0m")
 
 def pagarServicios(cliente):
     print("=== Pago de Servicios ===")
@@ -881,14 +867,14 @@ def pagarServicios(cliente):
 
     opcion = input("Seleccione una opción: ").strip()
     if opcion not in servicios:
-        print("Opción inválida.")
+        print("\033[1;31mPago fallido, opción inválida.\033[0m")
         return
 
     servicio = servicios[opcion]
     try:
         monto = int(input(f"Ingrese el monto a pagar para el servicio de {servicio}: "))
         if monto <= 0:
-            print("El monto debe ser mayor a 0.")
+            print("\033[1;31mPago fallido, el monto debe ser mayor a 0.\033[0m")
             return
 
         if cliente.cuenta.retirar(monto, "Pago de Servicios", registrar=False):
@@ -897,9 +883,9 @@ def pagarServicios(cliente):
             print(f"\033[1;34mPago exitoso del servicio de {servicio}.\033[0m")
             
         else:
-            print("\033[1;31mPago fallido. Saldo insuficiente.\033[0m")
+            print("\033[1;31mPago fallido, saldo insuficiente en la cuenta.\033[0m")
     except ValueError:
-        print("Entrada no válida. Debe ingresar un número entero.")
+        print("\033[1;31mEntrada no válida, ingresar un número entero.\033[0m")
 
 def consultarSaldo(cliente):
     print("=== Consulta de Saldo ===")
@@ -927,6 +913,7 @@ def consultarMovimientos(cliente):
         print(f"{fecha.ljust(20)} {hora.ljust(20)} {tipo.ljust(20)} {monto.rjust(15)}")
 
 
-#------------------------------------------------------------------------------#
 
+#------------------------------------------------------------------------------#
+#Ejecución
 menuPrincipal()
